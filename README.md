@@ -1,1 +1,2 @@
 This New Skill Assistant can evaluate the months required for you to master your target skill according to your learning goal. It offers multiple optional learning stages, creates a detailed customized study plan, and supports you to carry out the plan steadily, helping you successfully acquire a new skill.
+You can learn more than 50 popular skills here, including English, Japanese, Excel, SQL and so on.
