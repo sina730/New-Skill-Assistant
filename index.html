@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>新技能助手</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--primary:#4F46E5;--primary-hover:#4338CA;--primary-light:#EEF2FF;--bg:#FAFAFA;--card:#FFF;--text:#1A1A1A;--text-secondary:#666;--text-muted:#999;--border:#E5E7EB;--shadow-sm:0 1px 2px rgba(0,0,0,0.04);--shadow:0 1px 3px rgba(0,0,0,0.06),0 1px 2px rgba(0,0,0,0.04);--radius-sm:8px;--radius:12px;--radius-lg:16px;--font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans SC",sans-serif}
+html{font-size:16px}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;line-height:1.6;-webkit-font-smoothing:antialiased}
+.app-container{max-width:680px;margin:0 auto;padding:24px 20px 60px;min-height:100vh}
+.screen{display:none;animation:fadeSlideIn .35s ease}.screen.active{display:block}
+@keyframes fadeSlideIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.welcome-wrapper{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:75vh;text-align:center;gap:16px}
+.welcome-icon{font-size:64px;margin-bottom:8px;animation:float 3s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+.welcome-title{font-size:32px;font-weight:700;letter-spacing:-.5px}
+.welcome-subtitle{font-size:16px;color:var(--text-secondary)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:14px 32px;border:none;border-radius:var(--radius);font-size:16px;font-weight:600;font-family:var(--font);cursor:pointer;transition:all .2s ease;white-space:nowrap}
+.btn-primary{background:var(--primary);color:#fff;box-shadow:0 2px 8px rgba(79,70,229,0.25)}.btn-primary:hover{background:var(--primary-hover);box-shadow:0 4px 16px rgba(79,70,229,0.35);transform:translateY(-1px)}.btn-primary:active{transform:translateY(0)}
+.btn-secondary{background:#fff;color:var(--text);border:1.5px solid var(--border)}.btn-secondary:hover{background:#F9FAFB;border-color:#D1D5DB}
+.btn-danger{background:#fff;color:#EF4444;border:1.5px solid #FCA5A5}.btn-danger:hover{background:#FEF2F2}
+.btn-sm{padding:8px 16px;font-size:14px}.btn-lg{padding:16px 48px;font-size:18px;border-radius:var(--radius-lg)}.btn-full{width:100%}
+.nav-bar{display:flex;align-items:center;gap:12px;margin-bottom:28px;padding:4px 0}
+.nav-back{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border:none;background:#fff;border-radius:10px;cursor:pointer;font-size:18px;color:var(--text-secondary);box-shadow:var(--shadow-sm);transition:all .2s ease;flex-shrink:0}.nav-back:hover{background:#F9FAFB;color:var(--text)}
+.nav-title{font-size:17px;font-weight:600}.nav-right{margin-left:auto;display:flex;gap:8px}
+.search-header{text-align:center;margin:20px 0 28px}.search-header h2{font-size:22px;font-weight:700;margin-bottom:6px}.search-header p{font-size:14px;color:var(--text-muted)}
+.search-box{position:relative;margin-bottom:28px}
+.search-box input{width:100%;padding:15px 16px;border:2px solid var(--border);border-radius:var(--radius-lg);font-size:16px;font-family:var(--font);background:#fff;color:var(--text);transition:all .2s ease;outline:none}
+.search-box input:focus{border-color:var(--primary);box-shadow:0 0 0 4px rgba(79,70,229,0.08)}
+.search-box input::placeholder{color:var(--text-muted)}
+.search-results-dropdown{position:absolute;top:calc(100%+8px);left:0;right:0;background:#fff;border-radius:var(--radius-lg);box-shadow:0 10px 15px rgba(0,0,0,0.06);border:1px solid var(--border);max-height:320px;overflow-y:auto;z-index:10;display:none}.search-results-dropdown.show{display:block}
+.search-result-item{display:flex;align-items:center;gap:12px;padding:12px 16px;cursor:pointer;transition:background .15s ease}.search-result-item:hover{background:#F9FAFB}
+.search-result-item:first-child{border-radius:var(--radius-lg) var(--radius-lg) 0 0}.search-result-item:last-child{border-radius:0 0 var(--radius-lg) var(--radius-lg)}
+.search-result-emoji{width:40px;height:40px;display:flex;align-items:center;justify-content:center;background:var(--primary-light);border-radius:var(--radius-sm);font-size:20px;flex-shrink:0}
+.search-result-info{flex:1}.search-result-name{font-weight:600;font-size:15px}.search-result-category{font-size:12px;color:var(--text-muted)}
+.no-skill-result{padding:20px 16px;text-align:center;color:var(--text-muted);font-size:14px}
+.tag-section-title{font-size:13px;font-weight:600;color:var(--text-muted);margin:16px 0 10px;width:100%;text-align:left}
+.tag-cloud{display:flex;flex-wrap:wrap;gap:10px}
+.tag{display:inline-block;padding:9px 18px;background:#fff;border:1.5px solid var(--border);border-radius:100px;font-size:14px;font-family:var(--font);color:var(--text-secondary);cursor:pointer;transition:all .2s ease;user-select:none}.tag:hover{background:var(--primary-light);border-color:var(--primary);color:var(--primary)}
+.skill-detail-header{text-align:center;margin-bottom:24px}.skill-detail-icon{font-size:56px;margin-bottom:8px}.skill-detail-name{font-size:28px;font-weight:700}
+.skill-detail-category{font-size:13px;margin-top:4px;background:var(--primary-light);display:inline-block;padding:3px 12px;border-radius:100px;color:var(--primary);font-weight:500}
+.detail-card{background:#fff;border-radius:var(--radius-lg);padding:20px 24px;margin-bottom:14px;box-shadow:var(--shadow-sm);border:1px solid var(--border)}
+.detail-card-title{font-size:15px;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.detail-card p{font-size:14px;color:var(--text-secondary);line-height:1.7}
+.detail-card ul{list-style:none;padding:0}
+.detail-card li{font-size:14px;color:var(--text-secondary);padding:6px 0 6px 20px;position:relative;line-height:1.6}
+.detail-card li::before{content:'';position:absolute;left:0;top:13px;width:6px;height:6px;border-radius:50%;background:var(--primary);opacity:.5}
+.channel-item{display:flex;align-items:center;gap:12px;padding:10px 8px;margin:0 -8px;border-bottom:1px solid #F3F4F6;text-decoration:none;color:inherit;transition:background .15s ease;border-radius:var(--radius-sm)}.channel-item:last-child{border-bottom:none}.channel-item:hover{background:#F9FAFB}
+.channel-icon{width:36px;height:36px;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.channel-icon.official{background:#EEF2FF}.channel-icon.tutorial{background:#F0FDF4}.channel-icon.video{background:#FEF2F2}.channel-icon.book{background:#FFF7ED}.channel-icon.course{background:#F5F3FF}.channel-icon.community{background:#ECFEFF}
+.channel-name{font-weight:600;font-size:14px;flex:1}.channel-type{font-size:11px;color:var(--text-muted)}.channel-arrow{color:var(--text-muted);font-size:14px}
+.detail-actions{display:flex;gap:12px;margin-top:24px}.detail-actions .btn{flex:1}
+.config-section{margin-bottom:28px}.config-label{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:600;margin-bottom:12px}
+.level-options,.purpose-options{display:flex;gap:10px}
+.level-option,.purpose-option{flex:1;padding:14px 12px;border:2px solid var(--border);border-radius:var(--radius);text-align:center;cursor:pointer;background:#fff;transition:all .2s ease;font-family:var(--font)}.level-option:hover,.purpose-option:hover{border-color:#C7D2FE}
+.level-option.selected,.purpose-option.selected{border-color:var(--primary);background:var(--primary-light);color:var(--primary);font-weight:600}
+.level-option .level-name{font-size:15px;font-weight:600;display:block}.level-option .level-desc{font-size:11px;color:var(--text-muted);margin-top:2px;display:block}.level-option.selected .level-desc{color:var(--primary);opacity:.7}
+.duration-row{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.duration-recommend{flex:1;min-width:180px;display:flex;align-items:center;gap:10px;background:#F0FDF4;border:1.5px solid #BBF7D0;border-radius:var(--radius);padding:12px 16px}
+.duration-recommend .rec-icon{font-size:22px;flex-shrink:0}.duration-recommend .rec-label{font-size:11px;color:#16A34A;font-weight:600}.duration-recommend .rec-value{font-size:18px;font-weight:700;color:#15803D}
+.duration-manual{display:flex;align-items:center;gap:8px}.duration-manual label{font-size:13px;color:var(--text-muted);white-space:nowrap}
+.duration-manual input{width:64px;padding:11px 12px;border:2px solid var(--border);border-radius:var(--radius);font-size:16px;font-family:var(--font);text-align:center;outline:none;transition:all .2s ease}.duration-manual input:focus{border-color:var(--primary);box-shadow:0 0 0 4px rgba(79,70,229,0.08)}.duration-manual span{font-size:14px;color:var(--text-secondary)}
+.plan-header{background:#fff;border-radius:var(--radius-lg);padding:20px 24px;margin-bottom:20px;box-shadow:var(--shadow-sm);border:1px solid var(--border)}
+.plan-meta{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px}.plan-meta-item{font-size:12px;color:var(--text-muted);display:flex;align-items:center;gap:4px;background:#F9FAFB;padding:4px 10px;border-radius:100px}
+.progress-bar-wrapper{margin-top:14px}.progress-info{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}.progress-label{font-size:13px;color:var(--text-muted);font-weight:500}.progress-percent{font-size:24px;font-weight:700;color:var(--primary)}
+.progress-bar{width:100%;height:8px;background:#E5E7EB;border-radius:100px;overflow:hidden}.progress-bar-fill{height:100%;background:linear-gradient(90deg,var(--primary),#818CF8);border-radius:100px;transition:width .4s ease}
+.week-card{background:#fff;border-radius:var(--radius-lg);margin-bottom:10px;box-shadow:var(--shadow-sm);border:1px solid var(--border);overflow:hidden}
+.week-header{padding:12px 18px;background:#FAFBFF;border-bottom:1px solid var(--border);font-weight:600;font-size:14px;display:flex;align-items:center;gap:8px}
+.week-header .week-num{background:var(--primary);color:#fff;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0}
+.week-header .week-label{flex:1}.week-header .week-count{font-size:11px;color:var(--text-muted);font-weight:400}
+.task-item{display:flex;align-items:flex-start;gap:12px;padding:14px 18px;border-bottom:1px solid #F3F4F6;cursor:pointer;transition:background .15s ease}.task-item:last-child{border-bottom:none}.task-item:hover{background:#FAFBFF}
+.task-checkbox{width:20px;height:20px;border:2px solid #D1D5DB;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .2s ease;margin-top:2px}.task-item.completed .task-checkbox{background:var(--primary);border-color:var(--primary)}
+.task-checkbox::after{content:'✓';color:#fff;font-size:11px;font-weight:700;opacity:0;transition:opacity .15s ease}.task-item.completed .task-checkbox::after{opacity:1}
+.task-content{flex:1;min-width:0}.task-title{font-size:14px;font-weight:600;margin-bottom:4px}.task-item.completed .task-title{text-decoration:line-through;color:var(--text-muted)}
+.task-detail{font-size:13px;color:var(--text-secondary);line-height:1.65;white-space:pre-wrap}
+.task-resources{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.task-resource-link{font-size:11px;color:var(--primary);text-decoration:none;background:var(--primary-light);padding:3px 10px;border-radius:100px;transition:all .15s ease;white-space:nowrap}.task-resource-link:hover{background:#E0E7FF}
+.toast{position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(100px);background:#1A1A1A;color:#fff;padding:12px 24px;border-radius:100px;font-size:14px;font-weight:500;z-index:100;opacity:0;transition:all .3s ease;pointer-events:none;font-family:var(--font)}.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.empty-state{text-align:center;padding:40px 20px;color:var(--text-muted)}.empty-state .icon{font-size:48px;margin-bottom:12px;display:block}.empty-state p{font-size:14px;line-height:1.6}
+@media(max-width:480px){.app-container{padding:16px 14px 40px}.welcome-title{font-size:26px}.detail-actions{flex-direction:column}.level-options,.purpose-options{flex-direction:column}.plan-meta{gap:8px}.duration-row{flex-direction:column;align-items:stretch}}
+</style>
+</head>
+<body>
+<div class="app-container">
+
+<section class="screen active" id="screen-welcome">
+<div class="welcome-wrapper"><div class="welcome-icon">🚀</div><h1 class="welcome-title">新技能助手</h1><p class="welcome-subtitle">发现 · 规划 · 掌握</p><button class="btn btn-primary btn-lg" onclick="navigateTo('search')" style="margin-top:12px">🔍 开始学技能</button></div>
+<div id="saved-plans-preview" style="margin-top:24px"></div>
+</section>
+
+<section class="screen" id="screen-search">
+<div class="nav-bar"><button class="nav-back" onclick="navigateTo('welcome')">←</button><span class="nav-title">搜索技能</span></div>
+<div class="search-header"><h2>你想学什么技能？</h2><p>输入技能名称，发现你的下一个目标</p></div>
+<div class="search-box"><input type="text" id="searchInput" placeholder="🔍 输入技能名称，如 Python、SQL、日语..." autocomplete="off" oninput="onSearchInput()" onfocus="onSearchInput()"><div class="search-results-dropdown" id="searchDropdown"></div></div>
+<div class="tag-cloud" id="tagCloud"></div>
+</section>
+
+<section class="screen" id="screen-detail">
+<div class="nav-bar"><button class="nav-back" onclick="navigateTo('search')">←</button><span class="nav-title">技能详情</span></div>
+<div id="skillDetailContent"></div>
+</section>
+
+<section class="screen" id="screen-config">
+<div class="nav-bar"><button class="nav-back" onclick="navigateTo('detail')">←</button><span class="nav-title">定制学习计划</span></div>
+<div id="configContent"></div>
+</section>
+
+<section class="screen" id="screen-plan">
+<div class="nav-bar"><button class="nav-back" onclick="navigateTo('welcome')">←</button><span class="nav-title" id="planNavTitle">学习计划</span><div class="nav-right"><button class="btn btn-danger btn-sm" onclick="deleteCurrentPlan()">🗑</button></div></div>
+<div id="planContent"></div>
+</section>
+
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ===================================================================
+// 技能知识库（精简版，详情在 skillWeekPlans 里）
+// ===================================================================
+const skillsDB = {
+  python:{name:'Python',icon:'🐍',category:'编程开发',tags:['python','Python','py','爬虫'],description:'Python 是一门简洁优雅的通用编程语言，广泛应用于数据分析、人工智能、Web 开发、自动化脚本等领域，是目前全球最受欢迎的编程语言之一，也是新手入门编程的最佳选择。',howToStart:['从 python.org 下载安装 Python 3.11+（安装时勾选"Add to PATH"）','安装 VS Code + Python 扩展作为代码编辑器','写出第一个程序：print("Hello World!")','学习基础语法：变量、条件判断(if/else)、循环(for/while)、列表(list)、字典(dict)','选一个方向深入：数据分析(pandas)、Web后端(Flask/Django)、自动化脚本'],methods:['每天至少敲 30 分钟代码——编程是练出来的，不是看出来的','看视频教程时必须动手跟练，不要只被动地看','尽早做小项目：计算器、待办清单、数据报表，在实战中学习最快','遇到报错(Error)不要怕——仔细读红色错误信息，复制到 Google 搜索解决方案','加入 V2EX、知乎等社区提问交流，看别人怎么写代码','每学完一个知识点，用自己的话总结一遍——费曼学习法'],channels:[{name:'Python 官方文档（中文）',url:'https://docs.python.org/zh-cn/3/',type:'official'},{name:'菜鸟教程 Python',url:'https://www.runoob.com/python/',type:'tutorial'},{name:'B站 - 黑马程序员 Python 教程',url:'https://www.bilibili.com/video/BV1qW4y1a7fU',type:'video'},{name:'廖雪峰 Python 教程',url:'https://www.liaoxuefeng.com/wiki/1016959663602400',type:'tutorial'},{name:'《Python编程：从入门到实践》',url:'https://book.douban.com/subject/35196328/',type:'book'}]},
+  sql:{name:'SQL',icon:'🗄️',category:'编程开发',tags:['sql','SQL','数据库','mysql','MySQL','查询'],description:'SQL（Structured Query Language，结构化查询语言）是操作数据库的标准语言。无论数据分析师、后端开发还是产品经理，掌握 SQL 都能让你高效地从海量数据中提取有价值的信息，是数据相关岗位的必备技能。',howToStart:['安装一个数据库环境（新手强烈推荐 SQLite，零配置开箱即用；进阶用 MySQL）','了解数据库基本概念：表(Table)、行(Row/Record)、列(Column/Field)、主键(Primary Key)','从最基础的 SELECT 查询语句开始学起','学习数据过滤(WHERE)、排序(ORDER BY)、分组统计(GROUP BY + 聚合函数)','掌握多表关联查询(JOIN)——这是 SQL 的核心难点也是最重要的能力'],methods:['边学边练最重要——推荐 SQLZoo（免费在线练习）和 LeetCode 数据库题库','在真实数据集上练习比看教程有效 10 倍——下载公开数据集动手查','先死磕 SELECT 查询（覆盖日常 80% 的使用场景），再学 INSERT/UPDATE/DELETE','理解 SQL 语句的执行顺序：FROM → JOIN → WHERE → GROUP BY → HAVING → SELECT → ORDER BY → LIMIT','培养"集合思维"——把数据看作集合，用集合操作（交集/并集/差集）来思考问题'],channels:[{name:'SQLZoo 在线互动练习',url:'https://sqlzoo.net/',type:'tutorial'},{name:'LeetCode 数据库题库',url:'https://leetcode.cn/problemset/database/',type:'tutorial'},{name:'菜鸟教程 SQL',url:'https://www.runoob.com/sql/',type:'tutorial'},{name:'B站 - 尚硅谷 MySQL 教程',url:'https://www.bilibili.com/video/BV12b411K7Zu',type:'video'},{name:'W3Schools SQL 教程',url:'https://www.w3schools.com/sql/',type:'tutorial'}]},
+  javascript:{name:'JavaScript',icon:'📜',category:'编程开发',tags:['javascript','JavaScript','js','JS','前端'],description:'JavaScript 是 Web 开发的灵魂语言，运行在所有浏览器中，赋予网页交互和动态能力。配合 Node.js 还可以开发后端服务、桌面应用、移动 App。是全世界使用人数最多的编程语言，生态极为庞大。',howToStart:['不需要安装任何软件——打开 Chrome 浏览器，按 F12 打开开发者工具，在 Console 面板就能直接写 JS','学习基础语法：变量声明(let/const)、函数(function/箭头函数)、数组(Array)、对象(Object)','理解 DOM（文档对象模型）：如何用 JS 获取网页元素、修改内容、监听点击事件','学习 ES6+ 现代语法：箭头函数、解构赋值、模板字符串、Promise/async-await','选一个框架深入学习：React（最热门、岗位最多）或 Vue（最易上手、中文社区好）'],methods:['在浏览器 Console 里直接写代码测试——即时反馈是最快的学习方式','从修改网页元素开始实践：做一个点击计数器、图片轮播、待办清单(Todo List)','每天至少写一个小功能，积累代码量和手感','遇到问题优先查 MDN Web Docs——这是最权威的 Web 技术参考文档','关注前端技术博客和周刊，了解行业最新动态','参与 freeCodeCamp 等免费在线课程，系统性地学习'],channels:[{name:'MDN Web Docs（中文）',url:'https://developer.mozilla.org/zh-CN/docs/Web/JavaScript',type:'official'},{name:'现代 JavaScript 教程',url:'https://zh.javascript.info/',type:'tutorial'},{name:'B站 - 黑马程序员 JS 教程',url:'https://www.bilibili.com/video/BV1ux411d75J',type:'video'},{name:'freeCodeCamp（免费课程）',url:'https://www.freecodecamp.org/',type:'tutorial'},{name:'《JavaScript高级程序设计》',url:'https://book.douban.com/subject/35175321/',type:'book'}]},
+  java:{name:'Java',icon:'☕',category:'编程开发',tags:['java','Java','后端'],description:'Java 是老牌企业级编程语言，以"一次编写，到处运行"为核心理念。广泛用于后端服务开发、Android 移动开发、大数据处理(Hadoop/Spark)。语法严谨规范，是很多大学的教学语言，就业市场稳定庞大。',howToStart:['安装 JDK 17 LTS（长期支持版本）+ IntelliJ IDEA 社区版（最流行的 Java IDE）','理解 JVM（Java虚拟机）、JDK（开发工具包）、JRE（运行环境）三者的区别','学习基础语法：类(class)和对象、8种基本数据类型、流程控制(if/for/while)、数组','掌握面向对象编程三大特性：封装(Encapsulation)、继承(Inheritance)、多态(Polymorphism)','学习 Java 核心类库：集合框架(List/Set/Map)、IO流、异常处理、多线程基础'],methods:['Java 语法较严谨啰嗦，刚开始不要跳步，每个概念理解清楚再往下走','多画类图(UML)和流程图来理解面向对象的设计思路——可视化比纯看代码直观','做小项目练手：学生成绩管理系统、图书借阅系统、简易聊天室','学习使用 Maven 或 Gradle 管理项目依赖——这是企业级 Java 项目的标配','阅读优秀开源项目的源码（如 Spring Boot 的 starter 模块），学习规范的企业级写法'],channels:[{name:'Oracle Java 官方文档',url:'https://docs.oracle.com/en/java/',type:'official'},{name:'菜鸟教程 Java',url:'https://www.runoob.com/java/',type:'tutorial'},{name:'B站 - 尚硅谷 Java 教程',url:'https://www.bilibili.com/video/BV1Kb411W75N',type:'video'},{name:'廖雪峰 Java 教程',url:'https://www.liaoxuefeng.com/wiki/1252599548343744',type:'tutorial'},{name:'《Java核心技术》',url:'https://book.douban.com/subject/34898994/',type:'book'}]},
+  git:{name:'Git',icon:'🔀',category:'编程开发',tags:['git','Git','版本控制','github','GitHub'],description:'Git 是业界标准的分布式版本控制系统。无论是个人项目还是团队协作，Git 都是程序员的必备技能。它能追踪代码变更历史、管理并行开发分支、协同合并代码，让你的开发流程井井有条不丢失任何修改。',howToStart:['下载安装 Git + 注册 GitHub 账号（全球最大的代码托管平台）','学习核心概念：仓库(Repo)、提交(Commit)、分支(Branch)、远程仓库(Remote)','掌握最常用命令：git init/add/commit/push/pull/branch/checkout/merge','了解 .gitignore 文件（忽略不需要版本控制的文件）和 README.md（项目说明文档）','学习 GitHub Flow 分支策略——最简洁实用的团队协作工作流'],methods:['从现在开始，把自己所有项目都用 Git 管理——习惯成自然','用 VS Code 内置的 Git 面板辅助理解可视化的版本控制操作','实践"一个功能 = 一条分支 = 一个 Pull Request"的工作流','学会看 git log 和 git diff，理解每次代码变更的内容和原因','模拟团队协作：自己建两个分支分别做不同修改，合并时故意制造冲突(conflict)然后手动解决','把项目上传到 GitHub 上——这是程序员的"社交名片"'],channels:[{name:'Git 官方文档（中文版）',url:'https://git-scm.com/book/zh/v2',type:'official'},{name:'Learn Git Branching（游戏闯关式学习）',url:'https://learngitbranching.js.org/',type:'tutorial'},{name:'B站 - 尚硅谷 Git 教程',url:'https://www.bilibili.com/video/BV1vy4y1s7k6',type:'video'},{name:'GitHub Skills（官方互动教程）',url:'https://skills.github.com/',type:'tutorial'}]},
+  html_css:{name:'HTML/CSS',icon:'🎨',category:'编程开发',tags:['html','HTML','css','CSS','网页','前端'],description:'HTML 是网页的骨架（定义内容和结构），CSS 是网页的外衣（控制样式和布局）。两者结合可以构建任何你看到的网页界面。HTML/CSS 是前端开发的入门基础，学习门槛低但天花板高。',howToStart:['不需要安装任何软件——用记事本写 .html 文件，用浏览器打开就能看到效果','先学 HTML 常用标签：标题(h1~h6)、段落(p)、链接(a)、图片(img)、列表(ul/ol)、表格(table)、表单(form/input)','再学 CSS 核心概念：选择器(类/ID/标签)、颜色和背景、字体样式、盒模型(margin/border/padding/content)','掌握 Flexbox 弹性布局——现代网页一维布局的标准方案','学习 Grid 网格布局——处理复杂二维布局的利器'],methods:['打开任意网页按 F12，在开发者工具中查看它的 HTML 结构和 CSS 样式怎么写','从临摹开始：选 5 个喜欢的网站首页，尝试用 HTML/CSS 复刻出来','学习响应式设计(Responsive Design)——让你的网页在手机、平板、电脑上都好看','关注 Codepen.io 上的优秀作品获取设计灵感','尽早接触 Figma 等设计工具，设计审美和开发能力同样重要'],channels:[{name:'MDN Web Docs（中文）',url:'https://developer.mozilla.org/zh-CN/docs/Web/HTML',type:'official'},{name:'B站 - 黑马 HTML+CSS 教程',url:'https://www.bilibili.com/video/BV14J4114768',type:'video'},{name:'freeCodeCamp 响应式设计',url:'https://www.freecodecamp.org/',type:'tutorial'},{name:'CSS-Tricks（技巧博客）',url:'https://css-tricks.com/',type:'tutorial'},{name:'Codepen（设计灵感社区）',url:'https://codepen.io/',type:'community'}]},
+  excel:{name:'Excel',icon:'📊',category:'数据分析',tags:['excel','Excel','表格','office','Office'],description:'Excel 是全球使用最广泛的数据处理工具，从简单的表格制作到复杂的数据透视分析都能胜任。无论什么岗位——财务、人力、运营、销售——掌握 Excel 都能极大提升工作效率，是职场最通用的硬技能。',howToStart:['打开 Excel，从最基本的数据录入、单元格格式化（字体/颜色/边框/对齐）开始','学习 10 个最常用函数：SUM、AVERAGE、VLOOKUP、IF、COUNTIF、SUMIF、LEFT、RIGHT、MID、TEXT','掌握数据透视表——Excel 最强大的数据分析功能，拖拽几下就能完成复杂汇总','学习图表制作：柱状图、折线图、饼图，让数据可视化呈现','了解条件格式——自动高亮异常数据，让表格"会说话"'],methods:['用自己真实的工作/学习数据来练习，比网上随便找的虚拟示例有效 10 倍','先死死记住 20 个最常用函数——它们覆盖 80% 的工作场景','快捷键是效率关键——每天记住 2-3 个新快捷键并刻意使用','数据透视表 + 切片器 + 条件格式 = Excel 分析三件套','遇到不会的操作，按 F1 或直接在上方搜索框输入需求，Excel 会推荐对应功能','关注 ExcelHome 论坛和 B站 Excel 博主，学习别人解决问题的思路'],channels:[{name:'微软 Excel 官方帮助中心',url:'https://support.microsoft.com/zh-cn/excel',type:'official'},{name:'B站 - 零一Excel 教程合集',url:'https://www.bilibili.com/video/BV1UJ411X7T6',type:'video'},{name:'ExcelHome 技术论坛',url:'https://www.excelhome.net/',type:'community'},{name:'《你早该这么玩Excel》',url:'https://book.douban.com/subject/25708228/',type:'book'}]},
+  photoshop:{name:'Photoshop',icon:'🖼️',category:'设计创意',tags:['photoshop','PS','ps','修图','P图'],description:'Photoshop 是图像处理领域的行业标准软件，从照片精修、海报设计到 UI 界面制作、数字绘画，PS 几乎是每个设计师的必修课。功能极其强大，但入门并不需要学会所有功能——掌握 20% 的核心功能就能完成 80% 的工作。',howToStart:['安装 Adobe Photoshop（可从官网获取 7 天试用版，或使用 Photoshop 网页精简版尝鲜）','熟悉界面布局：左侧工具栏、顶部选项栏、右侧面板区（图层/颜色/属性/调整）','从最基本的操作开始：裁剪画面、调整亮度对比度、去掉照片上的水印/杂物、抠出物体换背景','深度学习图层(Layer)和蒙版(Mask)——这是 PS 最核心的两个概念，理解后就掌握了 PS 的一半','逐步探索通道、路径、智能对象、滤镜等进阶功能，用到什么学什么'],methods:['每次带着具体需求学——想修一张自拍？搜"PS 人像精修教程"跟着做一遍，比自己瞎点高效得多','图层和蒙版是重中之重——花最多的时间练习这两个功能，它们几乎出现在所有 PS 操作中','每天学一个工具或效果，不要试图一次学会所有功能——PS 有上百个功能，大部分你暂时用不到','关注站酷、花瓣、Dribbble 等设计社区，培养审美和配色感觉','快捷键是效率的根本：V=移动、B=画笔、E=橡皮擦、Ctrl+T=自由变换、Ctrl+J=复制图层——先记住这 5 个'],channels:[{name:'Adobe 官方 PS 教程',url:'https://helpx.adobe.com/cn/photoshop/tutorials.html',type:'official'},{name:'B站 - 敬伟 PS 完整教程（公认最好的中文入门）',url:'https://www.bilibili.com/video/BV1gW411q7EM',type:'video'},{name:'站酷（中文设计作品社区）',url:'https://www.zcool.com.cn/',type:'community'},{name:'Dribbble（全球设计灵感平台）',url:'https://dribbble.com/',type:'community'},{name:'花瓣网（设计素材收集）',url:'https://huaban.com/',type:'community'}]},
+  figma:{name:'Figma',icon:'🎯',category:'设计创意',tags:['figma','Figma','UI','ui','界面设计','UX'],description:'Figma 是基于浏览器的 UI/UX 设计工具，无需安装、跨平台、支持多人实时协作。因其免费入门、上手简单、协作强大的特点，已迅速取代 Sketch 成为 UI 设计师的首选工具，也是产品经理和前端开发的必备技能。',howToStart:['注册 Figma 账号（浏览器打开 figma.com 即可使用，无需下载安装）','了解界面布局：左侧图层面板、右侧属性面板、顶部工具栏、中央无限画布','学习基本操作：创建画框(Frame)、绘制形状(Rectangle/Ellipse)、添加文字(Text)、填充颜色','理解 Auto Layout（自动布局）——Figma 最强大的功能，让元素自动排列和响应式适配','学习组件(Component)和变体(Variant)——建立可复用的设计系统，避免重复劳动'],methods:['从临摹 UI 开始——截一张你喜欢的 App 页面，导入 Figma 中逐像素还原创','学习使用社区插件提升效率：Iconify（海量图标）、Unsplash（免费图片素材）、Content Reel（人名/地址等占位数据）','逛 Figma Community 社区，下载优秀设计师的源文件，拆解学习他们的图层组织、命名和组件用法','组件化思维——一旦发现同一个元素用了两次以上，立刻做成组件，不要复制粘贴','配合前端开发时，学习用 Figma 的 Dev Mode（开发模式）查看 CSS 代码和设计标注'],channels:[{name:'Figma 官方帮助中心（中文）',url:'https://help.figma.com/hc/zh-cn',type:'official'},{name:'Figma YouTube 官方频道',url:'https://www.youtube.com/@Figma',type:'video'},{name:'B站 - 设计师的 Figma 教程',url:'https://www.bilibili.com/video/BV1hY4y1h7cS',type:'video'},{name:'Figma Community（免费设计资源）',url:'https://www.figma.com/community',type:'community'},{name:'Figma 中文网（非官方教程站）',url:'https://www.figma.cn/',type:'tutorial'}]},
+  video_editing:{name:'视频剪辑',icon:'🎬',category:'设计创意',tags:['剪辑','视频','剪映','PR','pr','Premiere','达芬奇'],description:'短视频时代，视频剪辑已经成为最有价值的创作技能之一。无论是记录日常生活、运营自媒体账号、还是接商业单子赚钱，剪辑都是一项投入产出比极高的技能。从手机剪映开始，30 天就能看到明显进步。',howToStart:['新手先从剪映（免费且功能强大）开始——手机版和电脑版都支持，操作直觉化','进阶后学习 Adobe Premiere Pro（专业剪辑标准）或 DaVinci Resolve（免费专业调色+剪辑一体）','掌握五大基础操作：素材剪切和拼接、添加转场效果、上字幕、配背景音乐、调整视频速度','学习节奏感——剪辑的灵魂不是花哨转场，是对画面节奏和信息密度的把控','了解基础调色：曝光、对比度、饱和度、色温——让画面质感提升一个档次'],methods:['每天剪辑一个 15-60 秒的短视频——坚持 30 天就能看到质的飞跃，B站/抖音就是最好的练习场','先模仿再创作——找到你喜欢的视频，逐帧分析它的剪辑节奏、转场时机和 BGM 配合','BGM 选对了视频就成功了一半——花时间建立自己的音乐素材库（推荐 Epidemic Sound、抖音热门歌单）','学习讲故事的技巧——好剪辑是好内容的放大器，不是内容的遮羞布','发布作品到 B站/小红书/抖音获取真实观众反馈——数据不会骗人，根据播放量和完播率调整风格'],channels:[{name:'B站 - 影视飓风（专业剪辑+拍摄教程）',url:'https://space.bilibili.com/946974',type:'video'},{name:'B站 - 你好！剪映（剪映官方教程）',url:'https://www.bilibili.com/',type:'video'},{name:'DaVinci Resolve 官网（免费专业软件）',url:'https://www.blackmagicdesign.com/products/davinciresolve',type:'official'},{name:'新片场（国内创作人社区）',url:'https://www.xinpianchang.com/',type:'community'},{name:'Videvo（免费视频素材）',url:'https://www.videvo.net/',type:'tutorial'}]},
+  photography:{name:'摄影',icon:'📷',category:'设计创意',tags:['摄影','拍照','相机','构图','手机摄影'],description:'摄影是记录光影的艺术。无论用手机还是专业相机，学习摄影能让你发现日常生活中被忽略的美，用画面讲述故事、表达情感。手机摄影已经完全能满足入门和社交分享的需求——先学会用光，再考虑升级器材。',howToStart:['用你现有的设备开始——**手机完全可以**，iPhone 或安卓旗舰机的摄影能力已经非常强大','理解曝光三要素：光圈（控制进光量+景深）、快门速度（控制运动模糊）、ISO（感光度，影响噪点）及其互易关系','学习构图法则：三分法（画面九宫格）、引导线（道路/栏杆）、框架构图（门窗）、留白（给主体呼吸空间）','了解光线：光的四个方向（顺光/侧光/逆光/顶光）、色温（暖黄到冷蓝）、黄金时刻（日出后+日落前 1 小时）','大量观看优秀摄影作品培养"摄影眼"——看到好照片时问自己：为什么这张好看？光线从哪来？用什么构图？'],methods:['每天拍一张照片，坚持 365 天摄影计划——量变一定会引起质变','同一个场景尝试不同的角度（蹲下/爬高/靠近/远离）、不同的焦段（广角/长焦）、不同的光线条件——感受差异','先学构图再学后期——好底片（原片）比好后期重要得多，后期是对好底片的锦上添花','用手机自带的编辑功能或 Snapseed/Lightroom Mobile 学习基础调色：曝光、对比度、饱和度、色温','参加线下摄影活动或加入本地摄影群——和其他爱好者一起外拍进步更快'],channels:[{name:'B站 - 摄影师顾俊（通俗易懂）',url:'https://space.bilibili.com/25160268',type:'video'},{name:'500px（全球摄影社区）',url:'https://500px.com/',type:'community'},{name:'图虫（中文摄影作品平台）',url:'https://tuchong.com/',type:'community'},{name:'《美国纽约摄影学院摄影教材》上册',url:'https://book.douban.com/subject/3996847/',type:'book'},{name:'Snapseed（手机修图神器，免费）',url:'https://play.google.com/store/apps/details?id=com.niksoftware.snapseed',type:'tutorial'}]},
+  english:{name:'英语',icon:'🇬🇧',category:'语言学习',tags:['英语','英文','english','English','EN'],description:'英语是全球通用语言，是国际商务、学术研究和互联网内容的第一语言。无论是留学深造、外企工作、还是自由行出国旅游、阅读海外一手资讯——英语都是一项投资回报无限的能力。坚持正确的方法，每个人都能学好英语。',howToStart:['确定你的主要学习目标：出国考试（雅思/托福）？职场商务沟通？还是日常旅行交流？不同目标学习重点完全不同','测试当前词汇量水平（免费网站 testyourvocab.com），建立一个基准数据，之后每 2 周测试一次追踪进步','制定每日学习时间：至少 30-60 分钟，比时长更重要的是每天都坚持——中断一天要花 3 天弥补','建立英语环境：手机系统语言切换成英文、关注 5 个英文 YouTube/B站 博主、订阅 2 个英文播客'],methods:['把英语融入日常生活，而不是当作"学习任务"——用英文听歌看剧刷 TikTok，不知不觉就进步了','"可理解输入"是关键原则——始终选择你能听懂/看懂 80% 的学习材料，太难或太简单都无效','开口说远比完美发音重要——用 HelloTalk/Tandem 找母语者聊天，勇敢犯错，犯错是进步的标志','背单词不要死记硬背——用 Anki（间隔重复算法）+ 结合例句和场景，比单词书有效 5 倍','影子跟读法(Shadowing)：找一段 2 分钟英文音频，不看文本跟着模仿发音和语调——同时训练听力、发音、语感','试着用英语自言自语——洗澡时、通勤时用英文描述你正在做什么、看到什么、感受如何'],channels:[{name:'多邻国 Duolingo（游戏化入门神器）',url:'https://www.duolingo.com/',type:'tutorial'},{name:'BBC Learning English（免费专业课程）',url:'https://www.bbc.co.uk/learningenglish/',type:'official'},{name:'Anki（间隔重复背单词，免费开源）',url:'https://apps.ankiweb.net/',type:'tutorial'},{name:'HelloTalk（全球语言交换社区）',url:'https://www.hellotalk.com/',type:'community'},{name:'YouTube - English with Lucy（英音美女老师）',url:'https://www.youtube.com/@EnglishwithLucy',type:'video'},{name:'Grammarly（英文写作语法检查）',url:'https://www.grammarly.com/',type:'tutorial'}]},
+  japanese:{name:'日语',icon:'🇯🇵',category:'语言学习',tags:['日语','日文','japanese','Japanese','日本'],description:'日语是亚洲最重要的语言之一，全球使用人数约 1.3 亿。无论是看原版动漫日剧、去日本自由行深度游、还是进入日企工作拿高薪——学日语都能打开一扇通向新世界的大门。日语入门相对简单（发音规则少），但敬语和语法体系需要长期积累。',howToStart:['第一步也是最重要的一步：**学会五十音图**——平假名 46 个 + 片假名 46 个，这是所有日语学习的地基','选择一个教材体系：《标准日本语》（最适合自学者）或《大家的日语》（更适合课堂互动）','学习日语基本语序（SOV：主语-宾语-谓语），和中文/英文的 SVO 完全不同——这是最需要适应的','理解核心助词は(wa)、が(ga)、を(o)、に(ni)、で(de)、へ(e)——它们标记句中每个成分的角色','尽早接触真实的日语材料：动漫、日剧、NHK 新闻、日语歌——让耳朵适应日语的语速和音调'],methods:['五十音图必须滚瓜烂熟到能"看到假名 0.5 秒内读出、听到发音能写出"的程度——用记忆卡片法(Anki)，正面假名背面罗马音，一周内搞定','通过看动漫学日语要主动——关掉中文字幕（或至少用日文字幕），遇到不会的词暂停记下来查询，而不是被动看剧情','日语是"入门容易精通难"的典型——初级信心满满，中级开始怀疑人生是完全正常的，坚持下去就好','JLPT（日本语能力测试）是很好的阶段性目标——N5(入门)→N4(基础)→N3(日常)→N2(商务门槛)→N1(精通)','大声朗读比默读有效得多——日语发音规则相对简单，朗读出来同时练发音、语感和记忆','关注日语学习博主（如 B站-叶子老师、Yunaty日本語），看别人分享的学习方法和心路历程'],channels:[{name:'多邻国 Duolingo 日语课程',url:'https://www.duolingo.com/course/ja',type:'tutorial'},{name:'B站 - 叶子老师 标准日本语教程',url:'https://www.bilibili.com/video/BV1es41127kE',type:'video'},{name:'NHK NEWS WEB EASY（简化新闻，带假名注音）',url:'https://www3.nhk.or.jp/news/easy/',type:'official'},{name:'Jisho.org（最好用的日英在线辞典）',url:'https://jisho.org/',type:'tutorial'},{name:'《标准日本语》初级教材',url:'https://book.douban.com/subject/1081618/',type:'book'},{name:'Anki - 日语核心词汇牌组',url:'https://ankiweb.net/shared/decks/japanese',type:'tutorial'}]},
+  korean:{name:'韩语',icon:'🇰🇷',category:'语言学习',tags:['韩语','韩文','korean','Korean','한국어'],description:'韩语（한국어）因韩流文化（K-pop、韩剧、韩综）席卷全球而成为最热门的小语种之一。韩字（한글）由世宗大王在 1443 年创制，被认为是世界上最科学、最易学的文字系统——学会发音规则后，一两周就能读出所有韩文。',howToStart:['学习韩字 한글：由 14 个基本辅音 + 10 个基本元音组合构成，方块字形，一周可全部学会','掌握韩语发音规则：连音化、紧音化、送气化、腭化等音变规律——虽然规则多但有规律可循','选择一套教材：《延世韩国语》（最经典的大学教材）或《标准韩国语》','学习基础语法框架：韩语和日语一样是 SOV 语序，助词（은/는、이/가、을/를）标记主语和宾语','通过 K-pop 歌词、韩剧台词、韩综字幕开始接触真实语料——兴趣是最好的动力'],methods:['한글 一周就能完全学会——不要被"看起来是方块字"吓到，它比汉字简单太多了','韩语和日语语法结构高度相似（都是 SOV、都有敬语体系）——学完一门再学另一门会轻松很多','用韩剧学韩语的"三遍法"：第一遍开中文字幕看剧情理解 → 第二遍切换韩文字幕记录生词 → 第三遍无字幕跟读台词','TOPIK（韩国语能力考试）是很好的目标参照——初级(TOPIK I 1-2级)、中高级(TOPIK II 3-6级)','利用 K-pop 歌词记单词——韵律、旋律和重复有助于记忆，而且背歌词比背单词表有趣多了','下载 Papago（韩语翻译神器，比 Google 翻译准确得多）和 Naver 词典辅助学习'],channels:[{name:'多邻国 Duolingo 韩语课程',url:'https://www.duolingo.com/course/ko',type:'tutorial'},{name:'B站 - 韩语零基础入门教程',url:'https://www.bilibili.com/video/BV1ks41127d2',type:'video'},{name:'Talk To Me In Korean（全球最知名的韩语教学网站）',url:'https://talktomeinkorean.com/',type:'tutorial'},{name:'Naver 韩中词典（最权威）',url:'https://korean.dict.naver.com/',type:'tutorial'},{name:'Papago 翻译 App',url:'https://papago.naver.com/',type:'tutorial'}]},
+  writing:{name:'写作',icon:'✍️',category:'职场技能',tags:['写作','文案','写文章','撰稿','内容创作'],description:'写作是互联网时代最被低估的核心能力。无论是写工作周报、商业提案、自媒体推文还是技术博客——会写的人始终是稀缺资源。写作本质上是一种思维训练：写得清楚，说明想得透彻；写不清楚，说明还没想明白。',howToStart:['确定你的写作方向：职场公文（高效汇报和沟通）？自媒体内容（获取流量和粉丝）？技术博客（建立专业影响力）？还是创意写作（小说/散文）？','建立个人素材库：用 Notion/飞书/手机备忘录随时记录一闪而过的灵感、读到的好句子、值得深入的话题','学习基本写作结构：金字塔原理（结论先行→论据支撑）、STAR 法则（情境-任务-行动-结果）、5W1H（何人何事何时何地为何如何）','每天雷打不动写 300 字——任何主题都行，重点不是写什么而是建立每天写作的肌肉记忆','大量阅读优秀作品，读的时候不只是"看内容"——分析作者怎么开头吸引人、怎么组织段落、怎么收尾让人记住'],methods:['开始写这个动作本身比写出好东西重要 100 倍——先写出垃圾，再修改成精品。所有好文章都是从烂初稿改出来的','读完一篇文章或一本书后，用自己的话写一段 200 字的内容复述——检验自己是否真的理解了','好文章是改出来的——初稿写完后至少修改三遍：第一遍调结构（逻辑通不通），第二遍顺语言（读起来顺不顺），第三遍抠细节（用词准不准）','公开写作，接受反馈——发到知乎、公众号、朋友圈、小红书。点赞和评论是最好的正反馈，批评是最好的改进指南','模仿是最好的学习——找 3 个你欣赏的作者，分析他们的语言风格、句子长短、段落节奏，试着用他们的风格写一篇','建立素材和选题库——随时记录灵感，好的选题是写作的一半，不要在打开文档后才开始想"今天写什么"'],channels:[{name:'《金字塔原理》（职场写作必读）',url:'https://book.douban.com/subject/25782943/',type:'book'},{name:'《写作这回事》（斯蒂芬·金著，写作圣经）',url:'https://book.douban.com/subject/25894987/',type:'book'},{name:'《故事》（罗伯特·麦基，讲故事的底层逻辑）',url:'https://book.douban.com/subject/26717081/',type:'book'},{name:'少数派 Matrix 创作社区',url:'https://sspai.com/',type:'community'},{name:'知乎——写作话题精华',url:'https://www.zhihu.com/topic/19553431',type:'community'}]},
+  communication:{name:'沟通技巧',icon:'💬',category:'职场技能',tags:['沟通','交流','表达','演讲','说话','谈判'],description:'沟通是职场和生活中最核心的软技能——没有之一。清晰的表达、积极的倾听、有效的反馈、妥善的冲突处理——这些能力直接影响你的职业晋升速度和人际关系的深度。好消息是，沟通不是天生的，是完全可以系统训练的。',howToStart:['学习"非暴力沟通"(NVC)四步法：观察事实（不带评判）→ 表达感受 → 说出需要 → 提出具体请求','练习结构化表达：PREP 法则——先说观点(Point) → 给出理由(Reason) → 举一个例子(Example) → 重申观点(Point)','掌握积极倾听(Active Listening)：听对方说完后先用自己的话复述("你的意思是...对吗？")→ 确认理解正确 → 再发表自己的看法','了解不同的沟通风格：有人关注事(任务导向)，有人关注人(关系导向)——调整你的沟通方式去匹配对方','在日常低风险对话中有意识地运用这些技巧，先从和家人/朋友的对话开始练习'],methods:['用手机录下自己的一次讲话或演讲，回听——你会震惊地发现大量可改进的地方（语速、口头禅、逻辑清晰度）','沟通前花 30 秒在心里想清楚三个问题：我要传递什么信息？对方需要知道什么？我希望对方听完后做什么？','"三明治反馈法"给出批评意见：先肯定具体做得好的地方 → 提出 1-2 条具体可操作的改进建议 → 以鼓励和信任收尾','减少"但是"这个词的使用频率——"是的，而且..."比"是的，但是..."更让人愿意继续听下去','观察你身边公认沟通能力强的人——他们怎么开启对话？怎么提问？怎么回应反对意见？拆解他们的语言和肢体动作','读《关键对话》和《影响力》——这两本书让你理解人们在高压和不确定情境下的行为模式'],channels:[{name:'《非暴力沟通》（马歇尔·卢森堡）',url:'https://book.douban.com/subject/3532633/',type:'book'},{name:'《关键对话》（职场沟通必读）',url:'https://book.douban.com/subject/19975237/',type:'book'},{name:'《影响力》（罗伯特·西奥迪尼）',url:'https://book.douban.com/subject/1005576/',type:'book'},{name:'TED Talks - Communication 主题',url:'https://www.ted.com/topics/communication',type:'video'},{name:'B站 - 黄执中 表达课',url:'https://www.bilibili.com/',type:'video'}]},
+  time_management:{name:'时间管理',icon:'⏰',category:'职场技能',tags:['时间管理','效率','GTD','番茄工作法','专注','拖延症'],description:'时间管理的本质不是把每一分钟都填满——而是把有限的时间花在真正重要的事情上，有勇气对不重要的事情说"不"。好的时间管理系统让你工作更高效、生活更从容、内心更少焦虑，从被任务追着跑变成提前掌控全局。',howToStart:['先做一周"时间审计"——用手机备忘录或时间记录 App，诚实记录每天每小时在做什么，找到你的"时间黑洞"（刷手机/无效会议/无目的上网）','学习番茄工作法：选择一个任务 → 设定 25 分钟倒计时 → 全神贯注只做这件事 → 铃响休息 5 分钟 → 每 4 个番茄钟休息 15-30 分钟','掌握四象限法则（艾森豪威尔矩阵）：把任务按"紧急/重要"分类——重要且紧急（立刻做）、重要不紧急（安排时间做）、紧急不重要（委托别人做）、不重要不紧急（直接删掉）','每天早晨花 5 分钟列出今天最重要的 3 件事（MIT = Most Important Tasks），先吃掉那只"最丑的青蛙"（最难最重要的任务）','学会"批量处理"：每天固定 2-3 个时间段集中处理邮件和消息，而不是随时跳出来就回——每次任务切换消耗约 23 分钟来恢复专注'],methods:['番茄工作法是最简单也最有效的入门方法——25 分钟不看手机谁都做得到。从每天完成 4 个番茄钟开始','把一天精力最好的 2 小时（对大多数人来说是早上）留给最重要的工作——处理"深度工作"，不要在黄金时间做琐事','学会说"不"——当你对不重要的事情说"不"，你才能对真正重要的事情说"是"。拒绝不需要内疚','每周末花 15 分钟做周回顾：这周时间花得值不值？完成了几件重要的事？下周最重要的 3 个目标是什么？','工具永远不是关键——先用手写清单和手机自带日历，养成习惯后再考虑用 Todoist、Notion、飞书等进阶工具','警惕"假忙碌"——做很多不重要的小事让自己看起来很忙，其实是在逃避最重要但又难又大的那件事'],channels:[{name:'《深度工作》（卡尔·纽波特）',url:'https://book.douban.com/subject/27066533/',type:'book'},{name:'《搞定：无压工作的艺术》GTD 圣经',url:'https://book.douban.com/subject/26791793/',type:'book'},{name:'《番茄工作法图解》',url:'https://book.douban.com/subject/5916230/',type:'book'},{name:'Forest App（种树专注，手机戒断神器）',url:'https://www.forestapp.cc/',type:'tutorial'},{name:'Ali Abdaal（YouTube 效率博主 NO.1）',url:'https://www.youtube.com/@aliabdaal',type:'video'}]},
+  project_management:{name:'项目管理',icon:'📋',category:'职场技能',tags:['项目管理','PM','pm','PMP','项目经理'],description:'项目管理是让事情从想法变成现实的能力。无论你是程序员、设计师、运营还是创业者——掌握项目管理思维都能让你更有条理地推进复杂任务。PMP 认证更是职场晋升的重要加分项。',howToStart:['了解项目管理五大过程组：启动→规划→执行→监控→收尾（形成一个闭环）','学习两种主流方法论：瀑布式（按顺序推进，适合需求明确的传统项目）和敏捷/Scrum（迭代推进，适合需求会变的互联网项目）','掌握一到两个项目管理工具：个人项目用 Notion/飞书多维表格就够，团队项目用 Jira/Trello/Linear','理解项目管理的"铁三角"：范围(Scope)、时间(Time)、成本(Cost)三者永远相互制约——改一个必然影响另外两个'],methods:['从管理自己的小项目开始练习——哪怕只是"周末整理房间"这样的小事，也用项目化思维来规划和执行','沟通是项目经理 80% 的工作内容——花时间练习会议引导、需求澄清、冲突调解和跨部门协调','先用轻量级的敏捷方法（每日站会 15 分钟 + 看板可视化 + 双周迭代），不要一上来就引入重型流程吓跑团队','学习用甘特图（时间线规划）和燃尽图（进度跟踪）来可视化项目状态——一张好图胜过千言万语'],channels:[{name:'PMI（项目管理协会，PMP 认证官方）',url:'https://www.pmi.org/',type:'official'},{name:'Scrum Guide 官方指南（免费）',url:'https://scrumguides.org/',type:'official'},{name:'B站 - PMP 项目管理教程',url:'https://www.bilibili.com/video/BV1k64y1S7BL',type:'video'},{name:'《人月神话》（软件项目管理经典）',url:'https://book.douban.com/subject/1102259/',type:'book'},{name:'《凤凰项目》（IT 项目管理小说）',url:'https://book.douban.com/subject/26620419/',type:'book'}]},
+  cooking:{name:'烹饪',icon:'🍳',category:'兴趣爱好',tags:['烹饪','做菜','做饭','下厨','料理','美食'],description:'烹饪是生活的必备技能，也是最治愈人心的日常仪式。学会做饭不仅比天天外卖省钱健康，还能在朋友聚会时大显身手收获一片惊叹。从一道番茄炒蛋开始——每个人都能在厨房里找到创造的乐趣。',howToStart:['准备好基础装备：一把趁手的中式菜刀、一个不粘炒锅、一块砧板（生熟分开！）、基础调料（盐、生抽、老抽、料酒、醋、蚝油、白糖、淀粉）——全部配齐不到 300 元','从最简单的国民菜开始：番茄炒蛋、可乐鸡翅、蛋炒饭——这三道菜学会就能喂饱自己了','学习基础刀工：切片（黄瓜片练习薄厚均匀）、切丝（土豆丝练习，先切片再切丝）、切丁（胡萝卜丁练习大小一致）、拍蒜剁蒜末','理解火候的精髓：大火爆炒 = 快 + 嫩脆（青菜、肉丝）；中火烧制 = 入味（红烧肉、炖菜）；小火慢炖 = 软烂（汤、煲）','学会调味的平衡：咸（生抽+盐）、甜（白糖+冰糖）、酸（醋+番茄）、辣（干辣椒+豆瓣酱）、鲜（蚝油+鸡精）——五味的平衡是好吃的秘诀'],methods:['先集中精力学 5 道家常菜反复做——做到闭着眼睛都能做对再学新的。质量比数量重要 100 倍','准备工作（切菜、配料、腌肉）全部提前做好摆在小碗里（厨师管这叫 mise en place），再开火一个个下锅——这样烹饪时不会手忙脚乱','看短视频学做菜比看文字菜谱有效得多——B站/抖音搜索菜名，跟着视频一步一步做','失败是完全正常的——烧糊一百次之后你就是大厨。每次翻车后总结原因：火太大？盐放多了？翻面太早？','从做给自己吃到做给朋友吃——听到"哇好好吃"的那一刻，所有灶台前的辛苦都值了'],channels:[{name:'下厨房 App（最全中文菜谱）',url:'https://www.xiachufang.com/',type:'tutorial'},{name:'B站 - 美食作家王刚（硬核专业教学）',url:'https://space.bilibili.com/290526283',type:'video'},{name:'B站 - 日食记（治愈系美食视频）',url:'https://space.bilibili.com/104277620',type:'video'},{name:'《盐糖脂——食品巨头如何操控我们》',url:'https://book.douban.com/subject/26953568/',type:'book'},{name:'《烹饪的常识》',url:'https://book.douban.com/subject/35413583/',type:'book'}]},
+  fitness:{name:'健身',icon:'💪',category:'兴趣爱好',tags:['健身','增肌','减脂','力量训练','运动','塑形'],description:'健身不只是为了好身材——规律的力量训练和有氧运动能提升日常精力、改善睡眠质量、增强免疫力、延缓衰老。无论是增肌、减脂还是只为健康，科学的训练方法能让你事半功倍，避免受伤走弯路。',howToStart:['第一步先明确目标：你想增肌（变大变壮）？减脂（变瘦出线条）？还是增强综合体能（能跑能跳更有劲）？——不同目标训练方式完全不同','新手从自重训练开始最安全：标准俯卧撑（练胸+三头）、深蹲（练腿+臀）、平板支撑（练核心）——先掌握动作模式再加负重','了解健身房的三大黄金复合动作：杠铃深蹲、杠铃卧推、杠铃硬拉——这三个动作几乎覆盖全身所有肌群，效率最高','制定一个可持续的训练计划：每周 3-4 次力量训练，每次 45-60 分钟，每个部位每周练 2 次','建立基础营养概念：增肌需要热量盈余（吃得比消耗多）+ 每天每公斤体重摄入 1.6-2g 蛋白质；减脂需要热量缺口（消耗比吃得多）+ 保持蛋白质摄入防止肌肉流失'],methods:['前三个月是"新手福利期"——动作标准度远比重量大小重要。先花时间把动作做对，避免养成错误习惯后期膝盖/腰椎受伤','复合动作比孤立动作效率高得多——优先把深蹲、卧推、硬拉、引体向上、划船这些大动作做好，手臂腹肌放最后','饮食对体型的影响占 70%，训练只占 30%——减肥不是靠疯狂跑步，是靠厨房里的饮食管理','休息日和训练日同等重要——肌肉不是在训练时生长的，是在训练后休息和睡觉时修复生长的。保证每晚 7-8 小时睡眠','用手机 App 或小本子记录每次训练的动作、重量、组数、次数——看到数字在增长就是最大的动力来源'],channels:[{name:'Keep App（中文健身课程最全）',url:'https://www.keep.com/',type:'tutorial'},{name:'Nike Training Club（NTC，全部免费）',url:'https://www.nike.com/ntc-app',type:'tutorial'},{name:'B站 - 帅soserious（科学健身科普）',url:'https://space.bilibili.com/490308153',type:'video'},{name:'《力量训练基础》（Starting Strength）',url:'https://book.douban.com/subject/26861433/',type:'book'},{name:'MyFitnessPal（饮食热量记录 App）',url:'https://www.myfitnesspal.com/',type:'tutorial'}]},
+  guitar:{name:'吉他',icon:'🎸',category:'兴趣爱好',tags:['吉他','guitar','弹唱','指弹','乐器'],description:'吉他是全世界最受欢迎的入门乐器——便携、音色温暖、弹唱一体。学会最基本的 4 个和弦(C/Am/F/G)就能自弹自唱几百首流行歌曲，获得极大的成就感和纯粹的快乐。入门投入只需几百元。',howToStart:['买一把入门级吉他：500-1000 元的合板琴对初学者完全够用（推荐品牌：Yamaha F310、卡马、Saga），去实体店亲手试手感','学习吉他各部位名称（琴头/琴颈/品丝/琴桥/音孔）和正确持琴姿势（背挺直、琴身贴胸、左手自由移动）','先练右手基本功：手指拨弦(pima)、Pick 拨片上下拨弦、基本节奏型（下-下上-上下-下上）——右手是吉他的发动机，比左手重要','再练左手基本功：学会 C、Am、F（简化版小横按）、G 这四个"万能和弦"——它们能弹唱至少 200 首歌','尝试弹唱人生第一首歌：推荐《小星星》《旅行的意义》《老男孩》——成就感是最好的学习动力'],methods:['每天练 20 分钟远胜周末突击练 2 小时——吉他是肌肉记忆，少量高频练习效果最好','先练右手节奏再练左手和弦——右手控制了音色和节奏感，是吉他演奏的灵魂','大横按（F 和弦完整版）是吉他学习的第一个真正难点——坚持两周每天练 5 分钟就能攻克，不要放弃','节拍器是你最重要的朋友——买个实体节拍器或用手机 App。跟着节拍器练习，节奏稳比弹得快重要得多','用手机录下自己的练习录音回听——站在听众角度发现节奏不稳、换和弦慢、杂音多等问题','练到手指尖长茧疼痛是正常的——坚持 2-3 周茧长好后就不疼了，这是每个吉他手的必经之路'],channels:[{name:'B站 - 大树音乐屋（吉他弹唱教学）',url:'https://space.bilibili.com/322031709',type:'video'},{name:'Ultimate Guitar（全球最大吉他谱网站）',url:'https://www.ultimate-guitar.com/',type:'tutorial'},{name:'Yousician App（游戏化学吉他）',url:'https://yousician.com/',type:'tutorial'},{name:'GuitarTuna（免费调音器+节拍器 App）',url:'https://www.yousician.com/guitartuna',type:'tutorial'},{name:'B站 - 音乐人吉他教室',url:'https://www.bilibili.com/',type:'video'}]},
+  drawing:{name:'画画',icon:'🖌️',category:'兴趣爱好',tags:['画画','绘画','素描','插画','手绘','速写'],description:'画画是人类最古老的表达方式——比文字早了几万年。不需要天赋、不需要昂贵工具，只需要正确的方法和持续的练习。从随手涂鸦到独立创作，每个人都能在绘画中找到心流状态，用线条和色彩表达自己的内心世界。',howToStart:['准备最基础的绘画工具：一盒素描铅笔（2B/4B/6B 各一支够用了）、一本 A5 素描本、一块橡皮——总共不到 50 元就能开始','从最简单的形状和线条开始练习：画圆、画方形、画直线（用整个手臂发力而不是手腕）、画 S 形曲线——这是所有复杂画面的基础构成元素','学习透视基础：一点透视（所有线条汇聚到远方一个消失点，如正对走廊）、两点透视（两个消失点，如建筑转角）——没有透视就没有空间感','核心练习方法——观察比技巧更重要：画你面前的一个水杯时，不要画"你认为水杯应该长什么样"，而是仔细观察并画出"你眼睛实际看到的样子"——这是初学者最难跨过但最重要的门槛','临摹是你最好的老师：找喜欢的简单作品，把它倒过来临摹（是的，倒过来！这样可以骗过大脑的符号化倾向，让你看到真正的形状和线条）'],methods:['每天画 15 分钟的进步速度远大于每周画 3 小时——手眼协调能力需要每天刺激才能快速成长','先画轮廓（线稿）再加明暗（调子）——不要跳步，很多人急着上阴影但形都没画准，结果怎么改都不满意','随身带一本巴掌大的速写本——等公交、午休、排队时掏出来画 5 分钟。碎片时间积累起来是惊人的练习量','加入绘画社群（小红书搜"画画打卡"、DeviantArt、微博超话）——公开打卡发图会让你更有动力坚持，社群反馈是最好的改进指南','保持一个"灵感收集册"——看到让你心动的画面、颜色、构图就截图保存下来。灵感不是等来的，是收集来的','练习 80% + 创作 20%——不要一直只做练习不做创作。每 10 天至少画一张完整的"作品"，检验进步并保持热情'],channels:[{name:'B站 - Proko 绘画教程中文搬运（全球最好的绘画教学）',url:'https://www.bilibili.com/',type:'video'},{name:'Drawabox（完全免费的系统化绘画课程，从零开始）',url:'https://drawabox.com/',type:'tutorial'},{name:'小红书 - 绘画教程/画画打卡话题',url:'https://www.xiaohongshu.com/',type:'community'},{name:'《素描的诀窍》（Bert Dodson 著，新手圣经）',url:'https://book.douban.com/subject/10553107/',type:'book'},{name:'《五天学会绘画》（Betty Edwards，右脑绘画法）',url:'https://book.douban.com/subject/1054903/',type:'book'}]},
+  ai_ml:{name:'AI / 机器学习',icon:'🤖',category:'前沿技术',tags:['AI','ai','人工智能','机器学习','深度学习','ML','ChatGPT'],description:'人工智能正在以前所未有的速度重塑每一个行业——从 ChatGPT 到自动驾驶、从 AI 绘画到蛋白质结构预测。学习 AI/机器学习不仅是抓住时代最大风口的入场券，更能培养你用数据和模型思考问题的底层能力，这种思维方式在任何领域都价值连城。',howToStart:['先打好数学基础（不用精通再开始！掌握基础概念即可）：线性代数（向量、矩阵、矩阵乘法）、微积分（导数、梯度、链式法则）、概率统计（概率分布、贝叶斯、期望值）','Python 是 AI 领域的绝对标准语言——确保你 Python 基础过关（至少会：列表字典、函数、类、pip 安装库）','学习 AI 三大核心计算库：NumPy（多维数组和矩阵运算）、Pandas（数据读取和清洗）、Matplotlib/Seaborn（数据可视化）','从 Scikit-learn 入门传统机器学习——先理解算法思想再写代码：线性回归（预测房价）、决策树（鸢尾花分类）、K-Means 聚类（客户分群）','逐步进入深度学习：安装 PyTorch（推荐，学术界+工业界主流），从经典的 MNIST 手写数字识别项目开始——这是 AI 领域的"Hello World"'],methods:['学习 AI 最重要的一条原则：先理解算法"在做什么、为什么有效、适用于什么场景"，然后再写代码实现——不要反过来，调包侠走不远','Kaggle 是全球数据科学家的练习场——从 Titanic 入门赛（预测哪些乘客会幸存）开始，这是每个 AI 学习者的第一个比赛','不要被数学吓退——用到什么学什么。想理解线性回归？再学最小二乘法。想理解神经网络？再学链式法则和梯度下降。比先花半年学完数学再看 AI 高效得多','持续关注前沿动态：Hugging Face（AI 界的 GitHub，海量预训练模型）、Papers With Code（论文+代码对照）、The Batch（吴恩达的 AI 周刊）','动手做项目来驱动学习——预测房价、图片分类、文本情感分析、AI 聊天机器人，完成一个项目比看 10 个教程收获多','学习使用 ChatGPT/Claude 等大语言模型来辅助编程——向它提问解释概念、让它帮你 debug、让它展示代码示例。善用 AI 工具是现代 AI 学习者的必备技能'],channels:[{name:'吴恩达 Machine Learning 课程（最经典的入门课）',url:'https://www.coursera.org/learn/machine-learning',type:'course'},{name:'Kaggle（全球数据科学竞赛平台+免费数据集）',url:'https://www.kaggle.com/',type:'tutorial'},{name:'B站 - 李宏毅机器学习（台湾大学，讲得最好懂）',url:'https://www.bilibili.com/video/BV1Wv411h7kN',type:'video'},{name:'Hugging Face（海量免费预训练模型）',url:'https://huggingface.co/',type:'community'},{name:'PyTorch 官方教程（中文）',url:'https://pytorch.apachecn.org/',type:'official'},{name:'《动手学深度学习》（李沐，免费在线）',url:'https://d2l.ai/',type:'book'}]},
+  investment:{name:'理财投资',icon:'💰',category:'职场技能',tags:['理财','投资','基金','股票','存款','财务自由'],description:'理财不是有钱人的专利——恰恰相反，正因为钱不多，才更需要学会管理每一分钱。理财的本质是掌控金钱的流向，而不是被金钱掌控。从记账和储蓄开始，逐步了解基金、股票等投资工具，让钱为你工作——这是每个人一生的必修课。',howToStart:['理财第一步永远是记账——先搞清楚钱花去哪了。用手机 App（随手记/鲨鱼记账/MoneyWiz）连续记录 3 个月，你会震惊地发现"原来我的钱花在了这些地方"','建立紧急备用金（安全垫）：存够 3-6 个月的生活必需开支，放在随时可取出的货币基金（余额宝/零钱通）里——这笔钱不是用来投资的，是防止意外急需的','理解三个最基础的金融概念：复利（利滚利，爱因斯坦说它是世界第八大奇迹）、通货膨胀（钱每年贬值约 2-3%）、风险与收益的正比关系（高收益必然伴随高风险）','从最低风险的产品开始：货币基金（随时可取）→指数基金定投（每月固定日期投固定金额，分散买入成本。推荐沪深300+中证500指数基金）——这是最适合普通人的投资方式','逐步了解其他投资工具：债券基金（比货币基金收益略高）、股票（买股票=买公司的一部分所有权）、REITs（不动产信托，100 元就能当包租公/包租婆）'],methods:['黄金法则：先存钱后消费——工资到手立刻把 20% 转入储蓄/投资账户，剩下的才是可以花的。不要月底剩多少存多少（大概率不剩）','指数基金定投是普通人的投资最优解——不挑时机、不看盘、不焦虑。长期(5年+)坚持定投沪深300指数基金，历史年化收益约 8-10%','永远不要试图预测市场涨跌——华尔街年薪千万的基金经理大部分也跑不赢大盘指数。定投+长期持有是最好的策略','保险要先于投资：先把基础保障（百万医疗险+意外险+重疾险，一年几百到一两千）配齐，再谈投资增值。一场大病能瞬间掏空你多年的投资成果','持续学习财务知识——推荐按这个顺序读书：《小狗钱钱》（建立正确金钱观）→《穷爸爸富爸爸》（理解资产和负债的区别）→《指数基金投资指南》（学会实操）→《漫步华尔街》（理解市场本质）'],channels:[{name:'《小狗钱钱》（理财入门第一本书，大人小孩都能读）',url:'https://book.douban.com/subject/3576486/',type:'book'},{name:'《穷爸爸富爸爸》（改变金钱观念）',url:'https://book.douban.com/subject/1030078/',type:'book'},{name:'《指数基金投资指南》（银行螺丝钉著）',url:'https://book.douban.com/subject/27125643/',type:'book'},{name:'雪球 App（中文最大投资者社区）',url:'https://xueqiu.com/',type:'community'},{name:'且慢（基金投资策略平台，适合小白）',url:'https://qieman.com/',type:'tutorial'},{name:'天天基金网（基金数据查询）',url:'https://fund.eastmoney.com/',type:'tutorial'}]}
+};
+
+// ===================================================================
+// 时长推荐
+// ===================================================================
+function recommendDuration(currentLevel, targetLevel, purpose) {
+  const base = { beginner:2, intermediate:3, advanced:4 };
+  const workBonus = { beginner:2, intermediate:2, advanced:2 };
+  const gap = { beginner:0, intermediate:1, advanced:2 };
+  const gapBonus = Math.max(0, gap[targetLevel] - gap[currentLevel]);
+  const m = (purpose === 'work') ? base[targetLevel] + workBonus[targetLevel] + gapBonus : base[targetLevel] + gapBonus;
+  return Math.min(24, Math.max(1, m));
+}
+function durationHint(currentLevel, targetLevel, purpose) {
+  if (currentLevel === targetLevel) {
+    if (targetLevel === 'beginner') return purpose==='work' ? '工作需要扎实基础，建议多留时间打底' : '兴趣入门不必赶进度，轻松学更易坚持';
+    if (targetLevel === 'intermediate') return purpose==='work' ? '工作需要能独立做事，充分实战演练' : '兴趣驱动容易进入心流状态';
+    return purpose==='work' ? '工作需要专家级水平，充足时间更有竞争力' : '按兴趣深入探索，享受学习本身';
+  }
+  return `从${levelLabel(currentLevel)}到${levelLabel(targetLevel)}需要更多时间，建议稳扎稳打`;
+}
+
+// ===================================================================
+// ===================================================================
+// 月度学习计划生成
+// ===================================================================
+function buildMonthlyPlan(skillKey, currentLevel, targetLevel, durationMonths) {
+  const totalMonths = durationMonths;
+  const skill = skillsDB[skillKey];
+  const skillName = (skill && skill.name) || skillKey;
+  const category = (skill && skill.category) || '';
+  const hs = (skill && skill.howToStart) || [];
+  const mt = (skill && skill.methods) || [];
+  const level = currentLevel;
+
+  // 按技能类别定义月度递进结构
+  function getMonthThemes() {
+    if (category.includes('编程')) return ['环境搭建与语言基础','核心语法与数据结构','进阶特性与工程实践','实战项目'];
+    if (category.includes('语言')) return ['语音基础与日常词汇','语法框架与听说训练','阅读写作与综合运用','实战交流'];
+    if (category.includes('设计')||category.includes('摄影')) return ['工具基础与设计原理','核心技法与风格训练','综合创作与作品打磨','实战项目'];
+    if (category.includes('音乐') || skillKey==='guitar') return ['乐器基础与基本技巧','和弦音阶与节奏训练','曲目练习与音乐理论','完整演奏'];
+    if (category.includes('烹饪')||skillKey==='cooking') return ['厨房基础与基本技法','调味原理与经典菜式','菜系进阶与创意料理','宴客实战'];
+    if (category.includes('健身')||skillKey==='fitness') return ['身体评估与动作基础','力量训练与营养基础','分化训练与周期规划','体态优化与习惯养成'];
+    if (category.includes('数据')) return ['数据基础与分析工具','分析方法与可视化','高级分析与建模','实战项目'];
+    if (category.includes('职场')||category.includes('理财')) return ['理论框架与核心工具','方法体系与案例分析','实战应用与问题解决','综合实践'];
+    if (category.includes('画画')||skillKey==='drawing') return ['线条造型与观察方法','光影色彩与构图基础','材质表现与风格探索','独立创作'];
+    if (category.includes('前沿')||category.includes('AI')) return ['数学基础与编程准备','经典算法与模型理解','深度学习与工程实践','实战项目'];
+    return ['入门基础与认知建立','核心知识与技能训练','综合运用与能力提升','实战输出与项目总结'];
+  }
+
+  // 从技能数据抽取知识点（每项只用一次，用完不再取）
+  const usedHS = new Set(), usedMT = new Set();
+  function pickKnowledge(monthIdx) {
+    const items = [];
+    // 每个月从 howToStart 取 1 条未用过的
+    for (let i = 0; i < hs.length; i++) {
+      if (!usedHS.has(i)) { usedHS.add(i); items.push(hs[i]); break; }
+    }
+    // 每个月从 methods 取 1 条未用过的
+    for (let i = 0; i < mt.length; i++) {
+      if (!usedMT.has(i)) { usedMT.add(i); items.push(mt[i]); break; }
+    }
+    return items;
+  }
+
+  // 根据类别生成补充知识点
+  function categoryKnowledge(monthIdx) {
+    const k = [];
+    if (category.includes('编程')) {
+      const prog = [
+        [`了解${skillName}的用途和生态`,`掌握${skillName}的基本数据类型和变量`,`学会${skillName}的输入输出`,`理解${skillName}的程序执行流程`],
+        [`掌握${skillName}的条件判断和循环语句`,`学会${skillName}的列表/数组操作`,`理解${skillName}的函数定义与调用`,`练习${skillName}的字符串和文件处理`],
+        [`学习${skillName}的面向对象/模块化编程`,`掌握${skillName}的错误处理与调试技巧`,`了解${skillName}的常用库和框架`,`学习${skillName}的代码规范和最佳实践`],
+        [`综合项目：用${skillName}从零搭建一个完整应用`,`项目优化：代码重构和性能提升`,`独立解决项目中遇到的问题`,`总结${skillName}学习心得和进阶路线`]
+      ];
+      (prog[monthIdx]||prog[3]).forEach(t => k.push(t));
+    } else if (category.includes('语言')) {
+      const lang = [
+        [`了解${skillName}的发音体系和语音规则`,`学习${skillName}的基础字母/字符认读`,`掌握${skillName}日常问候和自我介绍的词汇句型`,`积累${skillName}核心高频词汇100-200个`],
+        [`学习${skillName}的基本语法框架（时态/语序/助词）`,`训练${skillName}的听力：每天听15分钟初级材料`,`练习${skillName}的口语：跟读模仿标准发音`,`扩展${skillName}词汇量到500个，覆盖日常话题`],
+        [`学习${skillName}的中级语法（从句/被动/敬语等）`,`训练${skillName}的阅读：每天读一篇中等难度文章`,`练习${skillName}的写作：每周写一篇150词短文`,`用${skillName}进行15分钟以上的实际对话`],
+        [`综合实战：用${skillName}做一个完整的表达（演讲/文章/对话）`,`独立阅读并理解${skillName}的原版材料`,`模拟真实场景用${skillName}交流（面试/点餐/商务）`,`评估${skillName}当前水平，制定下一步精进计划`]
+      ];
+      (lang[monthIdx]||lang[3]).forEach(t => k.push(t));
+    } else if (category.includes('设计')||category.includes('摄影')) {
+      const des = [
+        [`了解${skillName}的核心功能和界面布局`,`学习${skillName}的基本操作和工作流程`,`掌握${skillName}的基础工具使用`,`分析3个优秀作品，理解好设计的标准`],
+        [`学习${skillName}的核心技法（构图/配色/层次）`,`练习${skillName}的专项技能（每天一个主题）`,`模仿优秀作品，培养审美和手感`,`完成3个有针对性的小练习`],
+        [`学习${skillName}的进阶功能和技巧`,`探索个人风格，做一组系列作品`,`学习从创意构思到最终输出的完整流程`,`把之前的练习作品打磨到能展示的水平`],
+        [`独立完成一个完整的${skillName}作品（从构思到成品）`,`为作品撰写创作说明（设计思路/技法运用）`,`公开作品并收集真实反馈`,`整理个人作品集，规划下一步创作方向`]
+      ];
+      (des[monthIdx]||des[3]).forEach(t => k.push(t));
+    } else if (category.includes('音乐') || skillKey==='guitar') {
+      const mus = [
+        [`了解${skillName}的构造和各部位功能`,`学习${skillName}的正确姿势和基本手法`,`掌握${skillName}的基础练习（每天15分钟）`,`学会3个最基本的和弦/音阶/节拍型`],
+        [`学习${skillName}的核心技巧（换把/轮指/琶音等）`,`练习节奏感和音准，跟着节拍器训练`,`学会弹奏/演奏3首完整入门曲目`,`理解基础乐理：音阶/和弦构成/调性`],
+        [`学习${skillName}的进阶技法`,`练习3首中等难度曲目，追求流畅度`,`尝试即兴演奏和简单编曲`,`深入学习乐理：和声进行/调式/曲式结构`],
+        [`独立完成一首完整曲目的演奏/弹唱`,`录制演奏视频，自我评估并改进`,`尝试扒一首自己喜欢的歌`,`总结${skillName}学习成果，规划长期练习计划`]
+      ];
+      (mus[monthIdx]||mus[3]).forEach(t => k.push(t));
+    } else if (category.includes('烹饪') || skillKey==='cooking') {
+      const cook = [
+        [`了解厨房基础装备和常用调料`,`学习基本刀工：切片/切丝/切丁/剁末`,`理解火候：大火爆炒/中火烧制/小火慢炖`,`学会3道国民家常菜（番茄炒蛋/可乐鸡翅/蛋炒饭）`],
+        [`学习调味的平衡：咸甜酸辣鲜五味的搭配`,`掌握3种基础烹饪法：炒/炖/蒸`,`学会5道经典家常菜（涵盖荤素搭配）`,`理解食材处理：腌制/焯水/上浆/勾芡`],
+        [`学习一个菜系的代表菜（川/粤/鲁/苏等）`,`掌握2种进阶烹饪法：煎/烤/红烧/干锅`,`学会做一桌完整的3菜1汤`,`尝试改良和创新2道菜`],
+        [`独立完成一桌宴客菜（4菜1汤+主食）`,`设计菜单、采购食材、控制出菜节奏`,`根据反馈改进菜品口味和摆盘`,`整理个人菜谱集，形成自己的做菜风格`]
+      ];
+      (cook[monthIdx]||cook[3]).forEach(t => k.push(t));
+    } else if (category.includes('健身') || skillKey==='fitness') {
+      const fit = [
+        [`了解身体基本构造和主要肌群`,`学习基础动作模式：蹲/推/拉/铰链/支撑`,`掌握每个动作的正确姿势（质量>重量）`,`制定每周3次的训练计划`],
+        [`学习力量训练的核心原则（渐进超负荷）`,`掌握训练计划的编排（上下肢分化/推拉腿）`,`了解营养基础：蛋白质/碳水/脂肪的摄入`,`学习动作的进阶变式，增加训练刺激`],
+        [`引入周期化训练概念（增肌期/减脂期）`,`优化训练动作的细节和发力感`,`学习训练后的恢复方法（拉伸/睡眠/饮食）`,`尝试新的训练方式（超级组/递减组/暂停组）`],
+        [`完成一个完整的12周训练周期`,`对比前后体型/力量/体能的变化`,`建立可持续的长期健身习惯`,`制定下一阶段的训练目标`]
+      ];
+      (fit[monthIdx]||fit[3]).forEach(t => k.push(t));
+    } else if (category.includes('数据')) {
+      const dat = [
+        [`了解${skillName}的数据处理流程`,`学习${skillName}的数据导入和清洗`,`掌握${skillName}的基础函数和公式`,`完成第一个数据分析练习`],
+        [`学习${skillName}的数据透视和交叉分析`,`掌握${skillName}的可视化图表制作`,`学会用${skillName}做描述性统计分析`,`分析一个真实数据集并输出报告`],
+        [`学习${skillName}的高级分析功能`,`掌握${skillName}的预测建模基础`,`了解数据讲故事的方法论`,`完成一个端到端的数据分析案例`],
+        [`独立完成一个完整的数据分析项目`,`从数据获取到清洗、分析、可视化到结论`,`撰写数据分析报告并展示成果`,`总结数据分析方法论，建立自己的分析框架`]
+      ];
+      (dat[monthIdx]||dat[3]).forEach(t => k.push(t));
+    } else if (category.includes('职场')||category.includes('理财')) {
+      const career = [
+        [`了解${skillName}的核心概念和价值`,`学习${skillName}的基础理论和框架`,`掌握${skillName}的常用工具和方法`,`分析3个成功案例，理解${skillName}的实际应用`],
+        [`深入学习${skillName}的方法论体系`,`练习${skillName}的专项技能（逐个模块攻克）`,`做3个基于真实场景的案例分析`,`开始将${skillName}应用到自己的实际工作/生活中`],
+        [`学习${skillName}的进阶策略和技巧`,`在真实场景中应用${skillName}解决复杂问题`,`对比不同方法的优劣，形成自己的判断`,`持续优化自己的${skillName}实践`],
+        [`独立完成一个${skillName}的综合实践项目`,`系统梳理${skillName}的知识和方法论`,`总结实践经验，形成可复用的模板`,`制定长期的${skillName}精进计划`]
+      ];
+      (career[monthIdx]||career[3]).forEach(t => k.push(t));
+    } else if (category.includes('画画') || skillKey==='drawing') {
+      const draw = [
+        [`了解绘画基础工具和材料`,`学习观察方法：形状/比例/负空间`,`练习线条控制：直线/曲线/排线`,`完成3张基础造型练习（几何体/静物）`],
+        [`学习光影原理：三大面五大调`,`理解色彩基础：色相/明度/饱和度`,`练习构图法则：三分法/引导线/框架`,`完成3张光影色彩练习`],
+        [`学习材质表现：金属/玻璃/布料/皮肤`,`探索不同画风：写实/卡通/写意`,`开始临摹喜欢的作品，学习技法`,`完成一张完整的临摹作品`],
+        [`独立创作一张完整作品（从构思到完成）`,`撰写创作说明：主题/构图/技法运用`,`收集反馈并改进`,`整理个人作品集，规划创作方向`]
+      ];
+      (draw[monthIdx]||draw[3]).forEach(t => k.push(t));
+    } else if (category.includes('前沿')||category.includes('AI')) {
+      const ai = [
+        [`了解${skillName}的核心概念和应用领域`,`复习必要的数学基础：线性代数/概率/微积分`,`学习Python数据处理：NumPy/Pandas/Matplotlib`,`完成第一个${skillName}的入门实验`],
+        [`学习经典机器学习算法：线性回归/决策树/聚类`,`理解模型评估方法：准确率/召回率/交叉验证`,`使用Scikit-learn实现3个经典模型`,`分析每个模型的原理、优劣和适用场景`],
+        [`学习深度学习基础：神经网络/反向传播/优化器`,`使用PyTorch搭建第一个神经网络`,`训练一个图像分类或文本分类模型`,`学习模型调参和优化技巧`],
+        [`独立完成一个${skillName}的综合项目`,`从数据处理→模型训练→评估→部署的全流程`,`撰写项目报告：问题/方法/结果/反思`,`总结AI学习方法论，关注前沿动态`]
+      ];
+      (ai[monthIdx]||ai[3]).forEach(t => k.push(t));
+    } else {
+      // 通用
+      const gen = [
+        [`了解${skillName}是什么、能做什么`,`搞清楚学${skillName}需要什么基础准备`,`找3个最好的入门资源并开始学习`,`完成${skillName}的第一个入门示例`],
+        [`系统学习${skillName}的核心知识模块`,`每学一个模块做一次练习巩固`,`梳理${skillName}的知识框架`,`做3个专项小练习检验学习效果`],
+        [`学习${skillName}的进阶内容`,`综合运用所学做一个中等项目`,`攻克学习中的薄弱环节`,`独立完成一个陌生任务检验水平`],
+        [`独立完成一个${skillName}的综合项目`,`从规划到执行到交付的完整流程`,`评估当前水平，对比最初目标`,`总结学习方法论，制定下一步计划`]
+      ];
+      (gen[monthIdx]||gen[3]).forEach(t => k.push(t));
+    }
+    return k;
+  }
+
+  // 构建月度计划
+  const themes = getMonthThemes();
+  const months = [];
+  for (let m = 0; m < totalMonths; m++) {
+    const themeIdx = Math.min(m, themes.length - 1);
+    // 如果月数多于主题数，最后几个月都用最后一个主题（实战）
+    const actualTheme = m >= themes.length ? themes[themes.length - 1] : themes[m];
+    const label = totalMonths === 1 ? actualTheme : `第${m+1}个月：${actualTheme}`;
+
+    // 收集知识点
+    const knowledge = [];
+    // 1. 从技能数据取
+    knowledge.push(...pickKnowledge(m));
+    // 2. 从类别知识取
+    knowledge.push(...categoryKnowledge(m));
+    // 3. 去重
+    const seen = new Set();
+    const unique = knowledge.filter(k => { const s = k.slice(0,30); if(seen.has(s)) return false; seen.add(s); return true; });
+    // 4. 取5-6个知识点
+    const tasks = unique.slice(0, 6).map(title => ({ title, detail: '' }));
+    // 5. 最后一个月的最后一项是项目总结
+    if (m === totalMonths - 1 && tasks.length > 0) {
+      const last = tasks[tasks.length - 1];
+      if (!last.title.includes('项目') && !last.title.includes('实战') && !last.title.includes('总结')) {
+        tasks.push({ title: `综合实战：用${skillName}完成一个完整项目，检验学习成果`, detail: '' });
+        if (tasks.length > 6) tasks.shift();
+      }
+    }
+    months.push({ label, tasks });
+  }
+  return months;
+}
+
+// ===================================================================
+// 生成学习计划（统一入口）
+// ===================================================================
+function generatePlanWeeks(skillKey, currentLevel, targetLevel, durationMonths) {
+  const months = buildMonthlyPlan(skillKey, currentLevel, targetLevel, durationMonths);
+
+  // 给第一个月的知识点添加资源链接
+  const skill = skillsDB[skillKey];
+  if (skill && skill.channels && months.length > 0) {
+    const firstMonth = months[0];
+    if (firstMonth && firstMonth.tasks && firstMonth.tasks.length >= 2) {
+      firstMonth.tasks[0].resources = skill.channels.slice(0, 3).map(c => ({ name: c.name, url: c.url }));
+    }
+  }
+  return months;
+}
+
+// ===================================================================
+// 应用状态
+// ===================================================================
+let appState = {
+  currentScreen: 'welcome', previousScreen: null,
+  currentSkill: null, currentSkillKey: null, currentPlanId: null,
+  config: { currentLevel:'beginner', targetLevel:'beginner', purpose:'interest', duration:2 }
+};
+
+function $(id) { return document.getElementById(id); }
+function showToast(msg) {
+  const t = $('toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(t._to); t._to = setTimeout(() => t.classList.remove('show'), 2200);
+}
+function getPlans() { try { return JSON.parse(localStorage.getItem('skillAssistant_plans')||'[]'); } catch(e) { return []; } }
+function savePlans(p) { localStorage.setItem('skillAssistant_plans', JSON.stringify(p)); }
+
+function navigateTo(screen, data) {
+  appState.previousScreen = appState.currentScreen;
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const target = $(`screen-${screen}`);
+  if (target) { target.classList.add('active'); target.style.animation = 'none'; target.offsetHeight; target.style.animation = ''; }
+  appState.currentScreen = screen;
+  switch(screen) {
+    case 'welcome': renderWelcome(); break;
+    case 'search': renderSearch(); setTimeout(() => $('searchInput')?.focus(), 150); break;
+    case 'detail': if (data) { appState.currentSkill = data.skill; appState.currentSkillKey = data.key; } renderSkillDetail(); break;
+    case 'config': renderConfig(); break;
+    case 'plan': if (data?.planId) appState.currentPlanId = data.planId; renderPlan(); break;
+  }
+  window.scrollTo({ top:0, behavior:'smooth' });
+}
+
+// 欢迎页
+function renderWelcome() {
+  const plans = getPlans(), container = $('saved-plans-preview');
+  if (!plans.length) { container.innerHTML = `<div class="empty-state"><span class="icon">📋</span><p>还没有学习计划<br>点击上方按钮开始你的第一个技能之旅</p></div>`; return; }
+  const ip = plans.filter(p => !isPlanCompleted(p)), cp = plans.filter(p => isPlanCompleted(p));
+  let h = `<div style="text-align:center;margin-bottom:8px"><span style="font-size:13px;color:var(--text-muted);font-weight:600">📋 你的学习计划</span></div>`;
+  [...ip, ...cp].forEach(p => {
+    const pr = calcProgress(p), d = isPlanCompleted(p), sk = skillsDB[p.skillKey], ic = p.skillIcon || (sk?.icon) || '📚';
+    const pcl = p.currentLevel || p.level || 'beginner';
+    const ptl = p.targetLevel || p.level || 'beginner';
+    const plvlText = pcl === ptl ? levelLabel(ptl) : `${levelLabel(pcl)}→${levelLabel(ptl)}`;
+    h += `<div class="detail-card" style="cursor:pointer;margin-bottom:10px" onclick="appState.currentPlanId='${p.id}';navigateTo('plan',{planId:'${p.id}'})">
+      <div style="display:flex;align-items:center;gap:12px"><span style="font-size:28px">${ic}</span>
+        <div style="flex:1"><div style="font-weight:600;font-size:15px">${p.skillName} ${d?'<span style="font-size:11px;color:#22C55E;margin-left:6px">✓ 已完成</span>':''}</div>
+          <div style="display:flex;gap:8px;margin-top:2px;flex-wrap:wrap"><span style="font-size:11px;color:var(--text-muted)">${plvlText}</span><span style="font-size:11px;color:var(--text-muted)">${p.duration}个月</span><span style="font-size:11px;color:var(--text-muted)">${p.purpose==='work'?'💼 工作':'🎯 兴趣'}</span></div></div>
+        <div style="text-align:right"><div style="font-size:20px;font-weight:700;color:${d?'#22C55E':'var(--primary)'}">${pr}%</div></div></div>
+      <div class="progress-bar" style="margin-top:8px"><div class="progress-bar-fill" style="width:${pr}%;${d?'background:#22C55E':''}"></div></div></div>`;
+  });
+  container.innerHTML = h;
+}
+
+// 搜索
+function renderSearch() {
+  const cats = {}; Object.entries(skillsDB).forEach(([k,s]) => { if(!cats[s.category]) cats[s.category]=[]; cats[s.category].push({key:k,...s}); });
+  let h = ''; for(const [c,ss] of Object.entries(cats)) { h += `<div class="tag-section-title">${c}</div>`; ss.forEach(s => { h += `<span class="tag" onclick="selectSkill('${s.key}')">${s.icon} ${s.name}</span>`; }); }
+  $('tagCloud').innerHTML = h; $('searchInput').value = ''; $('searchDropdown').classList.remove('show');
+}
+function onSearchInput() {
+  const q = $('searchInput').value.trim().toLowerCase(), dd = $('searchDropdown');
+  if (!q) { dd.classList.remove('show'); return; }
+  const rs = searchSkills(q);
+  dd.innerHTML = rs.length ? rs.map(r => `<div class="search-result-item" onclick="selectSkill('${r.key}')"><span class="search-result-emoji">${r.icon}</span><div class="search-result-info"><div class="search-result-name">${hm(r.name,q)}</div><div class="search-result-category">${r.category}</div></div><span style="color:var(--text-muted)">→</span></div>`).join('') : `<div class="no-skill-result"><div style="font-size:24px;margin-bottom:6px">🔍</div>未找到内置技能"${q}"<br><span style="font-size:12px;color:var(--text-muted)">试试输入更通用的名称，或直接点击下方标签</span></div>`;
+  dd.classList.add('show');
+}
+function searchSkills(q) { const r=[]; Object.entries(skillsDB).forEach(([k,s])=>{let sc=0;if(s.name.toLowerCase()===q)sc=100;else if(s.name.toLowerCase().startsWith(q))sc=80;else if(s.name.toLowerCase().includes(q))sc=60;s.tags.forEach(t=>{if(t.toLowerCase()===q)sc=Math.max(sc,90);else if(t.toLowerCase().startsWith(q))sc=Math.max(sc,70);else if(t.toLowerCase().includes(q))sc=Math.max(sc,50)});if(s.category.toLowerCase().includes(q))sc=Math.max(sc,30);if(sc>0)r.push({key:k,...s,score:sc})});return r.sort((a,b)=>b.score-a.score).slice(0,8); }
+function hm(t,q){const i=t.toLowerCase().indexOf(q.toLowerCase());return i===-1?t:t.slice(0,i)+'<span style="color:var(--primary);font-weight:700">'+t.slice(i,i+q.length)+'</span>'+t.slice(i+q.length)}
+function selectSkill(k){const s=skillsDB[k];if(!s)return;$('searchDropdown').classList.remove('show');$('searchInput').value='';navigateTo('detail',{skill:s,key:k});}
+
+// 技能详情
+function renderSkillDetail() {
+  const s = appState.currentSkill; if (!s) { navigateTo('search'); return; }
+  let ch = ''; const tl = { official:'官方', tutorial:'教程', video:'视频', book:'书籍', course:'课程', community:'社区' };
+  if (s.channels?.length) ch = s.channels.map(c => `<a href="${c.url}" target="_blank" rel="noopener" class="channel-item"><span class="channel-icon ${c.type}">${c.type==='video'?'📺':c.type==='book'?'📖':c.type==='course'?'🎓':c.type==='community'?'💬':c.type==='tutorial'?'📝':'🔗'}</span><span class="channel-name">${c.name}</span><span class="channel-type">${tl[c.type]||c.type}</span><span class="channel-arrow">↗</span></a>`).join('');
+  $('skillDetailContent').innerHTML = `<div class="skill-detail-header"><div class="skill-detail-icon">${s.icon||'📚'}</div><h2 class="skill-detail-name">${s.name}</h2><span class="skill-detail-category">${s.category||''}</span></div>
+    <div class="detail-card"><div class="detail-card-title"><span class="icon">💡</span> 这是什么</div><p>${s.description||s.name+' 是一个值得探索的技能领域。'}</p></div>
+    <div class="detail-card"><div class="detail-card-title"><span class="icon">🚶</span> 怎么入门</div><ul>${(s.howToStart||[]).map(i=>`<li>${i}</li>`).join('')}</ul></div>
+    <div class="detail-card"><div class="detail-card-title"><span class="icon">📖</span> 学习方法</div><ul>${(s.methods||[]).map(i=>`<li>${i}</li>`).join('')}</ul></div>
+    <div class="detail-card"><div class="detail-card-title"><span class="icon">🔗</span> 学习渠道</div>${ch||`<p style="font-size:13px;color:var(--text-muted)">在 B站、知乎、YouTube 搜索"${s.name}教程"发现更多资源</p>`}</div>
+    <div class="detail-actions"><button class="btn btn-secondary" onclick="navigateTo('search')">👎 不感兴趣</button><button class="btn btn-primary" onclick="startConfig()">❤️ 我想学！</button></div>`;
+}
+
+// 配置
+function startConfig() { const d = recommendDuration('beginner','beginner','interest'); appState.config = { currentLevel:'beginner', targetLevel:'beginner', purpose:'interest', duration:d }; navigateTo('config'); }
+function renderConfig() {
+  const sk = appState.currentSkill; if (!sk) { navigateTo('search'); return; }
+  const {currentLevel, targetLevel, purpose, duration} = appState.config;
+  $('configContent').innerHTML = `<div style="text-align:center;margin-bottom:24px"><span style="font-size:48px">${sk.icon||'📚'}</span><h2 style="font-size:20px;font-weight:700;margin-top:8px">定制你的 ${sk.name} 学习计划</h2></div>
+    <div class="config-section"><div class="config-label"><span class="icon">📍</span> 当前水平</div><div class="level-options">
+      <div class="level-option ${currentLevel==='beginner'?'selected':''}" onclick="setCurrentLevel('beginner')"><span class="level-name">🌱 初级</span><span class="level-desc">零基础 / 刚入门</span></div>
+      <div class="level-option ${currentLevel==='intermediate'?'selected':''}" onclick="setCurrentLevel('intermediate')"><span class="level-name">🌿 中级</span><span class="level-desc">有一定基础</span></div>
+      <div class="level-option ${currentLevel==='advanced'?'selected':''}" onclick="setCurrentLevel('advanced')"><span class="level-name">🌳 高级</span><span class="level-desc">已经很熟练</span></div></div></div>
+    <div class="config-section"><div class="config-label"><span class="icon">🎯</span> 目标水平</div><div class="level-options">
+      <div class="level-option ${targetLevel==='beginner'?'selected':''}" onclick="setTargetLevel('beginner')"><span class="level-name">🌱 初级</span><span class="level-desc">入门会用即可</span></div>
+      <div class="level-option ${targetLevel==='intermediate'?'selected':''}" onclick="setTargetLevel('intermediate')"><span class="level-name">🌿 中级</span><span class="level-desc">能独立实战</span></div>
+      <div class="level-option ${targetLevel==='advanced'?'selected':''}" onclick="setTargetLevel('advanced')"><span class="level-name">🌳 高级</span><span class="level-desc">达到专业水平</span></div></div></div>
+    <div class="config-section"><div class="config-label"><span class="icon">💼</span> 学习目的</div><div class="purpose-options">
+      <div class="purpose-option ${purpose==='work'?'selected':''}" onclick="setPurpose('work')">💼 运用到工作中</div>
+      <div class="purpose-option ${purpose==='interest'?'selected':''}" onclick="setPurpose('interest')">🎯 只是感兴趣</div></div></div>
+    <div class="config-section"><div class="config-label"><span class="icon">⏱</span> 计划完成时间</div><div class="duration-row">
+      <div class="duration-recommend"><span class="rec-icon">💡</span><div><span class="rec-label">推荐时长</span><br><span class="rec-value">${recommendDuration(currentLevel,targetLevel,purpose)} 个月</span></div></div>
+      <div class="duration-manual"><label>或手动输入：</label><input type="number" id="durationInput" value="${duration}" min="1" max="24" onchange="onDurChange()" oninput="onDurChange()"><span>个月</span></div></div>
+      <div style="margin-top:8px;font-size:12px;color:var(--text-muted)">${durationHint(currentLevel,targetLevel,purpose)}。共约 <b>${duration*4} 周</b> 的计划。</div></div>
+    <button class="btn btn-primary btn-full btn-lg" onclick="generateAndSavePlan()" style="margin-top:12px">📋 生成学习计划</button>`;
+}
+function setCurrentLevel(l) { appState.config.currentLevel=l; if (gaps().needsSync) { appState.config.targetLevel=l; } appState.config.duration=recommendDuration(appState.config.currentLevel,appState.config.targetLevel,appState.config.purpose); renderConfig(); }
+function setTargetLevel(l) { appState.config.targetLevel=l; appState.config.duration=recommendDuration(appState.config.currentLevel,appState.config.targetLevel,appState.config.purpose); renderConfig(); }
+function gaps() { const g={beginner:0,intermediate:1,advanced:2}; return {needsSync:g[appState.config.targetLevel] < g[appState.config.currentLevel]}; }
+function setPurpose(p) { appState.config.purpose=p; appState.config.duration=recommendDuration(appState.config.currentLevel,appState.config.targetLevel,p); renderConfig(); }
+function onDurChange() { const v=parseInt($('durationInput').value); if(v&&v>=1&&v<=24) appState.config.duration=v; }
+
+// 生成并保存
+function generateAndSavePlan() {
+  const sk = appState.currentSkill; const {currentLevel, targetLevel, purpose} = appState.config;
+  let dur = parseInt($('durationInput')?.value); if (!dur||dur<1) dur = recommendDuration(currentLevel, targetLevel, purpose); if (dur>24) dur=24;
+  appState.config.duration = dur;
+  const weeks = generatePlanWeeks(appState.currentSkillKey, currentLevel, targetLevel, dur);
+  const plan = { id:'plan_'+Date.now(), skillName:sk.name, skillKey:appState.currentSkillKey, skillIcon:sk.icon||'📚', currentLevel, targetLevel, level:targetLevel, duration:dur, purpose, createdAt:new Date().toISOString().split('T')[0], weeks };
+  const plans = getPlans(); plans.unshift(plan); savePlans(plans);
+  appState.currentPlanId = plan.id; showToast('✅ 学习计划已生成！共 '+weeks.length+' 个月'); navigateTo('plan',{planId:plan.id});
+}
+
+// 计划页
+function renderPlan() {
+  const plans = getPlans(); const plan = plans.find(p => p.id === appState.currentPlanId); if (!plan) { navigateTo('welcome'); return; }
+  $('planNavTitle').textContent = `${plan.skillIcon} ${plan.skillName}`;
+  const pr = calcProgress(plan); const done = isPlanCompleted(plan);
+  const wl = plan.weeks || plan.phases || [];
+  let cards = '';
+  wl.forEach((week, wi) => {
+    const tasks = week.tasks || []; const wc = tasks.filter(t => t.completed).length; const wt = tasks.length; const wp = wt>0?Math.round((wc/wt)*100):0;
+    cards += `<div class="week-card"><div class="week-header"><span class="week-num">${wi+1}</span><span class="week-label">📅 ${week.label||week.phase||week.name}</span><span class="week-count">${wc}/${wt} · ${wp}%</span></div>${tasks.map((task,ti)=>`<div class="task-item ${task.completed?'completed':''}" onclick="toggleTask('${plan.id}',${wi},${ti})"><div class="task-checkbox"></div><div class="task-content"><div class="task-title">${task.title}</div><div class="task-detail">${task.detail||task.desc||''}</div>${task.resources?.length?`<div class="task-resources">${task.resources.map(r=>`<a href="${r.url||'#'}" target="_blank" rel="noopener" class="task-resource-link" onclick="event.stopPropagation()">🔗 ${r.name}</a>`).join('')}</div>`:''}</div></div>`).join('')}</div>`;
+  });
+  const cl = plan.currentLevel || plan.level || 'beginner';
+  const tl = plan.targetLevel || plan.level || 'beginner';
+  const lvlText = cl === tl ? levelLabel(tl) : `${levelLabel(cl)} → ${levelLabel(tl)}`;
+  $('planContent').innerHTML = `<div class="plan-header"><div style="display:flex;align-items:center;gap:10px"><span style="font-size:32px">${plan.skillIcon||'📚'}</span><div><div style="font-weight:700;font-size:17px">${plan.skillName}</div><div style="font-size:13px;color:var(--text-muted)">${plan.createdAt} 创建 · 共 ${wl.length} 个月</div></div></div><div class="plan-meta"><span class="plan-meta-item">📍 ${lvlText}</span><span class="plan-meta-item">⏱ ${plan.duration} 个月</span><span class="plan-meta-item">${plan.purpose==='work'?'💼 工作':'🎯 兴趣'}</span>${done?'<span class="plan-meta-item" style="background:#F0FDF4;color:#16A34A">✅ 已完成</span>':''}</div><div class="progress-bar-wrapper"><div class="progress-info"><span class="progress-label">总进度</span><span class="progress-percent">${pr}%</span></div><div class="progress-bar"><div class="progress-bar-fill" style="width:${pr}%;${done?'background:linear-gradient(90deg,#22C55E,#4ADE80)':''}"></div></div></div></div>${cards}<div style="margin-top:16px"><button class="btn btn-danger btn-full" onclick="deleteCurrentPlan()">🗑 删除此计划</button></div>`;
+}
+
+function toggleTask(pid, wi, ti) {
+  const plans = getPlans(); const plan = plans.find(p => p.id === pid); if (!plan) return;
+  const wl = plan.weeks || plan.phases; if (!wl?.[wi]) return;
+  const task = wl[wi].tasks[ti]; if (!task) return;
+  task.completed = !task.completed; savePlans(plans);
+  if (isPlanCompleted(plan) && task.completed) showToast('🎉 恭喜完成全部学习计划！');
+  renderPlan(); window.scrollTo({ top:0, behavior:'smooth' });
+}
+function deleteCurrentPlan() { if(!confirm('确定要删除这个学习计划吗？此操作不可恢复。'))return;let p=getPlans();p=p.filter(x=>x.id!==appState.currentPlanId);savePlans(p);showToast('已删除学习计划');navigateTo('welcome'); }
+function calcProgress(plan) { const wl=plan.weeks||plan.phases;if(!wl?.length)return 0;let t=0,c=0;wl.forEach(w=>{(w.tasks||[]).forEach(x=>{t++;if(x.completed)c++;})});return t>0?Math.round((c/t)*100):0; }
+function isPlanCompleted(plan) { const wl=plan.weeks||plan.phases;return wl?.length&&wl.every(w=>(w.tasks||[]).every(x=>x.completed)); }
+function levelLabel(l){return l==='beginner'?'初级':l==='intermediate'?'中级':'高级';}
+
+// 事件
+document.addEventListener('keydown',e=>{if(e.key==='Escape')$('searchDropdown')?.classList.remove('show');if(e.key==='Enter'&&appState.currentScreen==='search'){const q=$('searchInput').value.trim();if(q){const r=searchSkills(q);if(r.length>0)selectSkill(r[0].key);}}});
+document.addEventListener('click',e=>{if(appState.currentScreen==='search'){const dd=$('searchDropdown'),sb=document.querySelector('.search-box');if(dd&&sb&&!sb.contains(e.target))dd.classList.remove('show');}});
+renderWelcome();
+</script>
+</body>
+</html>
